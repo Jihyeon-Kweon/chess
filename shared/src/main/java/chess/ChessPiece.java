@@ -129,27 +129,35 @@ public class ChessPiece {
     }
 
     private void addBishopMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] directions = {1, -1}; // Represents row and column movement directions for diagonal moves.
+        int[] directions = {1, -1};
 
         for (int rowDir : directions) {
             for (int colDir : directions) {
                 for (int i = 1; i <= 8; i++) {
-                    ChessPosition newPos = new ChessPosition(pos.getRow() + i * rowDir, pos.getColumn() + i * colDir);
-                    if (!isValidPosition(newPos)) break;
+                    int newRow = pos.getRow() + i * rowDir;
+                    int newCol = pos.getColumn() + i * colDir;
 
+                    // 추가된 조건: 체스 보드 범위 내에 있는지 확인
+                    if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
+                        break;
+                    }
+
+                    ChessPosition newPos = new ChessPosition(newRow, newCol);
                     ChessPiece piece = board.getPiece(newPos);
+
                     if (piece == null) {
                         moves.add(new ChessMove(pos, newPos, null));
                     } else {
-                        if (piece.getTeamColor() != pieceColor) {
+                        if (piece.getTeamColor() != this.getTeamColor()) {
                             moves.add(new ChessMove(pos, newPos, null));
                         }
-                        break;  // Stop when encountering any piece.
+                        break;  // 다른 말이 있으면 이동 종료
                     }
                 }
             }
         }
     }
+
 
     private void addQueenMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         // Reuse bishop moves (diagonal)
@@ -182,18 +190,24 @@ public class ChessPiece {
 
         for (int rowChange : rowMoves) {
             for (int colChange : colMoves) {
-                if (rowChange == 0 && colChange == 0) continue; // Skip the current position
+                if (rowChange == 0 && colChange == 0) continue; // Skip current position
 
-                ChessPosition newPos = new ChessPosition(pos.getRow() + rowChange, pos.getColumn() + colChange);
-                if (isValidPosition(newPos)) {
+                int newRow = pos.getRow() + rowChange;
+                int newCol = pos.getColumn() + colChange;
+
+                // 체스 보드의 유효 범위 체크 (1~8)
+                if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                    ChessPosition newPos = new ChessPosition(newRow, newCol);
                     ChessPiece piece = board.getPiece(newPos);
-                    if (piece == null || piece.getTeamColor() != pieceColor) {
+
+                    if (piece == null || piece.getTeamColor() != this.getTeamColor()) {
                         moves.add(new ChessMove(pos, newPos, null));
                     }
                 }
             }
         }
     }
+
 
     @Override
     public boolean equals(Object o) {
