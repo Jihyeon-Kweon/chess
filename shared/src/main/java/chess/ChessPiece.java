@@ -168,21 +168,28 @@ public class ChessPiece {
     }
 
     private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[][] movesArray = {
-                {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
-                {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+        int[][] knightMoves = {
+                {-2, -1}, {-2, 1}, {2, -1}, {2, 1},
+                {-1, -2}, {-1, 2}, {1, -2}, {1, 2}
         };
 
-        for (int[] move : movesArray) {
-            ChessPosition newPos = new ChessPosition(pos.getRow() + move[0], pos.getColumn() + move[1]);
-            if (isValidPosition(newPos)) {
+        for (int[] move : knightMoves) {
+            int newRow = pos.getRow() + move[0];
+            int newCol = pos.getColumn() + move[1];
+
+            // 체스 보드의 유효 범위 체크 (1~8)
+            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                ChessPosition newPos = new ChessPosition(newRow, newCol);
                 ChessPiece piece = board.getPiece(newPos);
-                if (piece == null || piece.getTeamColor() != pieceColor) {
+
+                // 비어 있거나 상대 팀의 기물이 있는 경우 이동 가능
+                if (piece == null || piece.getTeamColor() != this.getTeamColor()) {
                     moves.add(new ChessMove(pos, newPos, null));
                 }
             }
         }
     }
+
 
     private void addKingMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         int[] rowMoves = {-1, 0, 1};
