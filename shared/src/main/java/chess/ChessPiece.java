@@ -78,5 +78,145 @@ public class ChessPiece {
         return validMoves;
     }
 
+    private void addPawnMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int startRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
 
+        // one movement (basic)
+        ChessPosition oneStep = new ChessPosition(pos.getRow() + direction, pos.getColumn());
+        if (board.getPiece(oneStep) == null) {
+            moves.add(new ChessMove(pos, oneStep, null));
+
+            // move two squares if it's initial
+            if (pos.getRow() == startRow) {
+                ChessPosition twoStep = new ChessPosition(pos.getRow() + 2 * direction, pos.getColumn());
+                if (board.getPiece(twoStep) == null) {
+                    moves.add(new ChessMove(pos, twoStep, null));
+                }
+            }
+        }
+
+        // diagonal movement
+        for (int colOffset : new int[]{-1, 1}) {
+            ChessPosition attackPos = new ChessPosition(pos.getRow() + direction, pos.getColumn() + colOffset);
+            ChessPiece targetPiece = board.getPiece(attackPos);
+            if (targetPiece != null && targetPiece.getTeamColor() != pieceColor) {
+                moves.add(new ChessMove(pos, attackPos, null));
+            }
+        }
+    }
+
+    private void addRookMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int[] directions = {1, -1};
+
+        // 가로, 세로 방향 확인
+        for (int dir : directions) {
+            for (int i = 1; i <= 8; i++) {
+                ChessPosition newPos = new ChessPosition(pos.getRow() + i * dir, pos.getColumn());
+                if (!isValidPosition(newPos)) break;
+
+                ChessPiece piece = board.getPiece(newPos);
+                if (piece == null) {
+                    moves.add(new ChessMove(pos, newPos, null));
+                } else {
+                    if (piece.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(pos, newPos, null));
+                    }
+                    break;  // 같은 팀 말이 있으면 이동 불가
+                }
+            }
+        }
+    }
+
+    private void addBishopMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int[] directions = {1, -1}; // Represents row and column movement directions for diagonal moves.
+
+        for (int rowDir : directions) {
+            for (int colDir : directions) {
+                for (int i = 1; i <= 8; i++) {
+                    ChessPosition newPos = new ChessPosition(pos.getRow() + i * rowDir, pos.getColumn() + i * colDir);
+                    if (!isValidPosition(newPos)) break;
+
+                    ChessPiece piece = board.getPiece(newPos);
+                    if (piece == null) {
+                        moves.add(new ChessMove(pos, newPos, null));
+                    } else {
+                        if (piece.getTeamColor() != pieceColor) {
+                            moves.add(new ChessMove(pos, newPos, null));
+                        }
+                        break;  // Stop when encountering any piece.
+                    }
+                }
+            }
+        }
+    }
+
+    private void addQueenMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        // Reuse bishop moves (diagonal)
+        addBishopMoves(moves, board, pos);
+
+        // Reuse rook moves (straight lines)
+        addRookMoves(moves, board, pos);
+    }
+
+    private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int[][] movesArray = {
+                {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+                {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+        };
+
+        for (int[] move : movesArray) {
+            ChessPosition newPos = new ChessPosition(pos.getRow() + move[0], pos.getColumn() + move[1]);
+            if (isValidPosition(newPos)) {
+                ChessPiece piece = board.getPiece(newPos);
+                if (piece == null || piece.getTeamColor() != pieceColor) {
+                    moves.add(new ChessMove(pos, newPos, null));
+                }
+            }
+        }
+    }
+
+    private void addKingMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int[] rowMoves = {-1, 0, 1};
+        int[] colMoves = {-1, 0, 1};
+
+        for (int rowChange : rowMoves) {
+            for (int colChange : colMoves) {
+                if (rowChange == 0 && colChange == 0) continue; // Skip the current position
+
+                ChessPosition newPos = new ChessPosition(pos.getRow() + rowChange, pos.getColumn() + colChange);
+                if (isValidPosition(newPos)) {
+                    ChessPiece piece = board.getPiece(newPos);
+                    if (piece == null || piece.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(pos, newPos, null));
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChessPiece that = (ChessPiece) o;
+        return pieceColor == that.pieceColor && type == that.type;
+    }
+
+    // Override hashCode() for correct hashing behavior
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceColor, type);
+    }
+
+    // Override toString() for debugging purposes
+    @Override
+    public String toString() {
+        return pieceColor + " " + type;
+    }
+
+
+    private boolean isValidPosition(ChessPosition pos) {
+        return pos.getRow() >= 1 && pos.getRow() <= 8 && pos.getColumn() >= 1 && pos.getColumn() <= 8;
+    }
 }
