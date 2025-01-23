@@ -79,32 +79,32 @@ public class ChessPiece {
     }
 
     private void addPawnMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
-        int startRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
+        int row = pos.getRow();
+        int col = pos.getColumn();
 
-        // one movement (basic)
-        ChessPosition oneStep = new ChessPosition(pos.getRow() + direction, pos.getColumn());
-        if (board.getPiece(oneStep) == null) {
-            moves.add(new ChessMove(pos, oneStep, null));
+        int direction = (this.getTeamColor() == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int newRow = row + direction;
 
-            // move two squares if it's initial
-            if (pos.getRow() == startRow) {
-                ChessPosition twoStep = new ChessPosition(pos.getRow() + 2 * direction, pos.getColumn());
-                if (board.getPiece(twoStep) == null) {
-                    moves.add(new ChessMove(pos, twoStep, null));
+        if (newRow >= 1 && newRow <= 8) {
+            ChessPosition newPos = new ChessPosition(newRow, col);
+            if (board.getPiece(newPos) == null) {
+                moves.add(new ChessMove(pos, newPos, null));
+            }
+        }
+
+        // 대각선 잡기 처리 (왼쪽, 오른쪽)
+        for (int dCol : new int[]{-1, 1}) {
+            int newCol = col + dCol;
+            if (newCol >= 1 && newCol <= 8 && newRow >= 1 && newRow <= 8) {
+                ChessPosition capturePos = new ChessPosition(newRow, newCol);
+                ChessPiece target = board.getPiece(capturePos);
+                if (target != null && target.getTeamColor() != this.getTeamColor()) {
+                    moves.add(new ChessMove(pos, capturePos, target.getPieceType()));
                 }
             }
         }
-
-        // diagonal movement
-        for (int colOffset : new int[]{-1, 1}) {
-            ChessPosition attackPos = new ChessPosition(pos.getRow() + direction, pos.getColumn() + colOffset);
-            ChessPiece targetPiece = board.getPiece(attackPos);
-            if (targetPiece != null && targetPiece.getTeamColor() != pieceColor) {
-                moves.add(new ChessMove(pos, attackPos, null));
-            }
-        }
     }
+
 
     private void addRookMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         int[] rowDirections = {1, -1, 0, 0}; // 위, 아래
