@@ -114,4 +114,28 @@ public class ChessBoard {
         return java.util.Arrays.deepHashCode(board);
     }
 
+    public boolean isPositionValid(int row, int col){
+        return row >= 1 && row <= 8 && col >= 1 && col <= 8;
+    }
+
+    private ChessPosition getEnPassantTargetSquare;
+
+    public void setGetEnPassantTargetSquare(ChessPosition pos){
+        this.getEnPassantTargetSquare = pos;
+    }
+
+    public ChessPosition getEnPassantTargetSquare(){
+        return getEnPassantTargetSquare;
+    }
+    public boolean isEnPassantCapture(ChessPosition pawnPos, ChessPosition targetPos) {
+        ChessPiece adjacentPawn = getPiece(new ChessPosition(pawnPos.getRow(), targetPos.getColumn()));
+
+        if (adjacentPawn != null && adjacentPawn.getPieceType() == ChessPiece.PieceType.PAWN
+                && adjacentPawn.getTeamColor() != getPiece(pawnPos).getTeamColor()) {
+            return targetPos.equals(getEnPassantTargetSquare());
+        }
+        return false;
+    }
+
+
 }

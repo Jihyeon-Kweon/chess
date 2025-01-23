@@ -81,29 +81,85 @@ public class ChessPiece {
     private void addPawnMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         int row = pos.getRow();
         int col = pos.getColumn();
-
         int direction = (this.getTeamColor() == ChessGame.TeamColor.WHITE) ? 1 : -1;
         int newRow = row + direction;
 
-        if (newRow >= 1 && newRow <= 8) {
-            ChessPosition newPos = new ChessPosition(newRow, col);
-            if (board.getPiece(newPos) == null) {
-                moves.add(new ChessMove(pos, newPos, null));
+        // 한 칸 전진
+        if (isValidMove(board, newRow, col)) {
+            addPawnMoveWithPromotionCheck(moves, pos, new ChessPosition(newRow, col), null);
+
+            // 첫 이동 시 두 칸 전진 가능
+            if (isFirstMove(row)) {
+                int twoStepRow = row + (2 * direction);
+                if (isValidMove(board, twoStepRow, col)) {
+                    moves.add(new ChessMove(pos, new ChessPosition(twoStepRow, col), null));
+                }
             }
         }
 
-        // 대각선 잡기 처리 (왼쪽, 오른쪽)
+        // 대각선 잡기 (왼쪽 및 오른쪽)
+        addDiagonalCaptureMoves(moves, board, pos, newRow, col);
+
+        // 앙파상(En Passant) 처리
+        addEnPassantMoves(moves, board, pos, row, col);
+    }
+
+    private boolean isValidMove(ChessBoard board, int row, int col) {
+        return board.isPositionValid(row, col) && board.getPiece(new ChessPosition(row, col)) == null;
+    }
+
+    // 폰의 첫 이동 여부 확인
+    private boolean isFirstMove(int row) {
+        return (this.getTeamColor() == ChessGame.TeamColor.WHITE && row == 2) ||
+                (this.getTeamColor() == ChessGame.TeamColor.BLACK && row == 7);
+    }
+
+    private void addDiagonalCaptureMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos, int newRow, int col) {
         for (int dCol : new int[]{-1, 1}) {
             int newCol = col + dCol;
-            if (newCol >= 1 && newCol <= 8 && newRow >= 1 && newRow <= 8) {
+            if (board.isPositionValid(newRow, newCol)) {
                 ChessPosition capturePos = new ChessPosition(newRow, newCol);
                 ChessPiece target = board.getPiece(capturePos);
                 if (target != null && target.getTeamColor() != this.getTeamColor()) {
-                    moves.add(new ChessMove(pos, capturePos, target.getPieceType()));
+                    addPawnMoveWithPromotionCheck(moves, pos, capturePos, target.getPieceType());
                 }
             }
         }
     }
+
+    // 앙파상(En Passant) 이동 추가
+    private void addEnPassantMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos, int row, int col) {
+        for (int dCol : new int[]{-1, 1}) {
+            int enPassantCol = col + dCol;
+
+            if (enPassantCol < 1 || enPassantCol > 8){
+                continue;
+            }
+
+            ChessPosition enPassantPos = new ChessPosition(row, enPassantCol);
+            if (board.isPositionValid(row, enPassantCol) && board.isEnPassantCapture(pos, enPassantPos)) {
+                moves.add(new ChessMove(pos, new ChessPosition(row + (this.getTeamColor() == ChessGame.TeamColor.WHITE ? 1 : -1), enPassantCol), ChessPiece.PieceType.PAWN));
+            }
+        }
+    }
+
+    // 승격 여부 확인 및 이동 추가
+    private void addPawnMoveWithPromotionCheck(Collection<ChessMove> moves, ChessPosition from, ChessPosition to, ChessPiece.PieceType capture) {
+        int promotionRow = (this.getTeamColor() == ChessGame.TeamColor.WHITE) ? 8 : 1;
+        if (to.getRow() == promotionRow) {
+            for (ChessPiece.PieceType promotionType : new ChessPiece.PieceType[]{
+                    ChessPiece.PieceType.QUEEN,
+                    ChessPiece.PieceType.ROOK,
+                    ChessPiece.PieceType.BISHOP,
+                    ChessPiece.PieceType.KNIGHT}) {
+                moves.add(new ChessMove(from, to, promotionType));
+            }
+        } else {
+            moves.add(new ChessMove(from, to, capture));
+        }
+    }
+
+
 
 
     private void addRookMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
