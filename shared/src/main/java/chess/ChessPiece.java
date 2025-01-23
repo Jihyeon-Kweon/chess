@@ -107,26 +107,34 @@ public class ChessPiece {
     }
 
     private void addRookMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] directions = {1, -1};
+        int[] rowDirections = {1, -1, 0, 0}; // 위, 아래
+        int[] colDirections = {0, 0, 1, -1}; // 좌, 우
 
-        // 가로, 세로 방향 확인
-        for (int dir : directions) {
-            for (int i = 1; i <= 8; i++) {
-                ChessPosition newPos = new ChessPosition(pos.getRow() + i * dir, pos.getColumn());
-                if (!isValidPosition(newPos)) break;
+        for (int i = 0; i < 4; i++) {
+            for (int j = 1; j <= 8; j++) {
+                int newRow = pos.getRow() + j * rowDirections[i];
+                int newCol = pos.getColumn() + j * colDirections[i];
 
+                // 체스 보드 경계 확인
+                if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
+                    break;
+                }
+
+                ChessPosition newPos = new ChessPosition(newRow, newCol);
                 ChessPiece piece = board.getPiece(newPos);
+
                 if (piece == null) {
-                    moves.add(new ChessMove(pos, newPos, null));
+                    moves.add(new ChessMove(pos, newPos, null));  // 빈 칸일 경우 이동 추가
                 } else {
-                    if (piece.getTeamColor() != pieceColor) {
-                        moves.add(new ChessMove(pos, newPos, null));
+                    if (piece.getTeamColor() != this.getTeamColor()) {
+                        moves.add(new ChessMove(pos, newPos, null));  // 상대팀 말이면 캡처 가능
                     }
-                    break;  // 같은 팀 말이 있으면 이동 불가
+                    break;  // 말이 있으면 더 이상 진행 불가
                 }
             }
         }
     }
+
 
     private void addBishopMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         int[] directions = {1, -1};
@@ -160,12 +168,37 @@ public class ChessPiece {
 
 
     private void addQueenMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        // Reuse bishop moves (diagonal)
-        addBishopMoves(moves, board, pos);
+        int[] directions = {1, -1, 0};  // 대각선, 직선 방향 모두 고려
 
-        // Reuse rook moves (straight lines)
-        addRookMoves(moves, board, pos);
+        for (int rowDir : directions) {
+            for (int colDir : directions) {
+                if (rowDir == 0 && colDir == 0) {
+                    continue;
+                }
+                for (int i = 1; i <= 8; i++) {
+                    int newRow = pos.getRow() + i * rowDir;
+                    int newCol = pos.getColumn() + i * colDir;
+
+                    if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
+                        break;
+                    }
+
+                    ChessPosition newPos = new ChessPosition(newRow, newCol);
+                    ChessPiece piece = board.getPiece(newPos);
+
+                    if (piece == null) {
+                        moves.add(new ChessMove(pos, newPos, null));  // 빈 칸이면 이동 가능
+                    } else {
+                        if (piece.getTeamColor() != this.getTeamColor()) {
+                            moves.add(new ChessMove(pos, newPos, null));  // 상대 팀 말이면 캡처 가능
+                        }
+                        break;  // 다른 말이 있으면 더 이상 이동 불가능
+                    }
+                }
+            }
+        }
     }
+
 
     private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
         int[][] knightMoves = {
