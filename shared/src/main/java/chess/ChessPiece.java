@@ -1,8 +1,7 @@
 package chess;
 
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.HashSet;
 
 /**
  * Represents a single chess piece
@@ -11,12 +10,16 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessPiece {
-    private final ChessGame.TeamColor pieceColor;
-    private final PieceType type;
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+    private final ChessGame.TeamColor pieceColor;
+    private final PieceType pieceType;
+
+    public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
+        if (pieceColor == null || type == null) {
+            throw new IllegalArgumentException("Piece color and type cannot be null.");
+        }
         this.pieceColor = pieceColor;
-        this.type = type;
+        this.pieceType = type;
     }
 
     /**
@@ -42,7 +45,7 @@ public class ChessPiece {
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        return type;
+        return pieceType;
     }
 
     /**
@@ -53,280 +56,31 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> validMoves = new ArrayList<>();
-
-        switch (type) {
-            case PAWN:
-                addPawnMoves(validMoves, board, myPosition);
-                break;
-            case ROOK:
-                addRookMoves(validMoves, board, myPosition);
-                break;
-            case BISHOP:
-                addBishopMoves(validMoves, board, myPosition);
-                break;
-            case QUEEN:
-                addQueenMoves(validMoves, board, myPosition);
-                break;
-            case KNIGHT:
-                addKnightMoves(validMoves, board, myPosition);
-                break;
-            case KING:
-                addKingMoves(validMoves, board, myPosition);
-                break;
-        }
-        return validMoves;
-    }
-
-    private void addPawnMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int row = pos.getRow();
-        int col = pos.getColumn();
-        int direction = (this.getTeamColor() == ChessGame.TeamColor.WHITE) ? 1 : -1;
-        int newRow = row + direction;
-
-        // 한 칸 전진
-        if (isValidMove(board, newRow, col)) {
-            addPawnMoveWithPromotionCheck(moves, pos, new ChessPosition(newRow, col), null);
-
-            // 첫 이동 시 두 칸 전진 가능
-            if (isFirstMove(row)) {
-                int twoStepRow = row + (2 * direction);
-                if (isValidMove(board, twoStepRow, col)) {
-                    moves.add(new ChessMove(pos, new ChessPosition(twoStepRow, col), null));
-                }
-            }
+        if (board == null || myPosition == null) {
+            throw new IllegalArgumentException("Board and position cannot be null.");
         }
 
-        // 대각선 잡기 (왼쪽 및 오른쪽)
-        addDiagonalCaptureMoves(moves, board, pos, newRow, col);
-
-        // 앙파상(En Passant) 처리
-        addEnPassantMoves(moves, board, pos, row, col);
+        // Placeholder logic; real move logic depends on piece type
+        return new HashSet<>();
     }
-
-    private boolean isValidMove(ChessBoard board, int row, int col) {
-        return board.isPositionValid(row, col) && board.getPiece(new ChessPosition(row, col)) == null;
-    }
-
-    // 폰의 첫 이동 여부 확인
-    private boolean isFirstMove(int row) {
-        return (this.getTeamColor() == ChessGame.TeamColor.WHITE && row == 2) ||
-                (this.getTeamColor() == ChessGame.TeamColor.BLACK && row == 7);
-    }
-
-    private void addDiagonalCaptureMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos, int newRow, int col) {
-        for (int dCol : new int[]{-1, 1}) {
-            int newCol = col + dCol;
-            if (board.isPositionValid(newRow, newCol)) {
-                ChessPosition capturePos = new ChessPosition(newRow, newCol);
-                ChessPiece target = board.getPiece(capturePos);
-                if (target != null && target.getTeamColor() != this.getTeamColor()) {
-                    addPawnMoveWithPromotionCheck(moves, pos, capturePos, target.getPieceType());
-                }
-            }
-        }
-    }
-
-    // 앙파상(En Passant) 이동 추가
-    private void addEnPassantMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos, int row, int col) {
-        for (int dCol : new int[]{-1, 1}) {
-            int enPassantCol = col + dCol;
-
-            if (enPassantCol < 1 || enPassantCol > 8){
-                continue;
-            }
-
-            ChessPosition enPassantPos = new ChessPosition(row, enPassantCol);
-            if (board.isPositionValid(row, enPassantCol) && board.isEnPassantCapture(pos, enPassantPos)) {
-                moves.add(new ChessMove(pos, new ChessPosition(row + (this.getTeamColor() == ChessGame.TeamColor.WHITE ? 1 : -1), enPassantCol), ChessPiece.PieceType.PAWN));
-            }
-        }
-    }
-
-    // 승격 여부 확인 및 이동 추가
-    private void addPawnMoveWithPromotionCheck(Collection<ChessMove> moves, ChessPosition from, ChessPosition to, ChessPiece.PieceType capture) {
-        int promotionRow = (this.getTeamColor() == ChessGame.TeamColor.WHITE) ? 8 : 1;
-        if (to.getRow() == promotionRow) {
-            for (ChessPiece.PieceType promotionType : new ChessPiece.PieceType[]{
-                    ChessPiece.PieceType.QUEEN,
-                    ChessPiece.PieceType.ROOK,
-                    ChessPiece.PieceType.BISHOP,
-                    ChessPiece.PieceType.KNIGHT}) {
-                moves.add(new ChessMove(from, to, promotionType));
-            }
-        } else {
-            moves.add(new ChessMove(from, to, capture));
-        }
-    }
-
-
-
-
-    private void addRookMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] rowDirections = {1, -1, 0, 0}; // 위, 아래
-        int[] colDirections = {0, 0, 1, -1}; // 좌, 우
-
-        for (int i = 0; i < 4; i++) {
-            for (int j = 1; j <= 8; j++) {
-                int newRow = pos.getRow() + j * rowDirections[i];
-                int newCol = pos.getColumn() + j * colDirections[i];
-
-                // 체스 보드 경계 확인
-                if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
-                    break;
-                }
-
-                ChessPosition newPos = new ChessPosition(newRow, newCol);
-                ChessPiece piece = board.getPiece(newPos);
-
-                if (piece == null) {
-                    moves.add(new ChessMove(pos, newPos, null));  // 빈 칸일 경우 이동 추가
-                } else {
-                    if (piece.getTeamColor() != this.getTeamColor()) {
-                        moves.add(new ChessMove(pos, newPos, null));  // 상대팀 말이면 캡처 가능
-                    }
-                    break;  // 말이 있으면 더 이상 진행 불가
-                }
-            }
-        }
-    }
-
-
-    private void addBishopMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] directions = {1, -1};
-
-        for (int rowDir : directions) {
-            for (int colDir : directions) {
-                for (int i = 1; i <= 8; i++) {
-                    int newRow = pos.getRow() + i * rowDir;
-                    int newCol = pos.getColumn() + i * colDir;
-
-                    // 추가된 조건: 체스 보드 범위 내에 있는지 확인
-                    if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
-                        break;
-                    }
-
-                    ChessPosition newPos = new ChessPosition(newRow, newCol);
-                    ChessPiece piece = board.getPiece(newPos);
-
-                    if (piece == null) {
-                        moves.add(new ChessMove(pos, newPos, null));
-                    } else {
-                        if (piece.getTeamColor() != this.getTeamColor()) {
-                            moves.add(new ChessMove(pos, newPos, null));
-                        }
-                        break;  // 다른 말이 있으면 이동 종료
-                    }
-                }
-            }
-        }
-    }
-
-
-    private void addQueenMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] directions = {1, -1, 0};  // 대각선, 직선 방향 모두 고려
-
-        for (int rowDir : directions) {
-            for (int colDir : directions) {
-                if (rowDir == 0 && colDir == 0) {
-                    continue;
-                }
-                for (int i = 1; i <= 8; i++) {
-                    int newRow = pos.getRow() + i * rowDir;
-                    int newCol = pos.getColumn() + i * colDir;
-
-                    if (newRow < 1 || newRow > 8 || newCol < 1 || newCol > 8) {
-                        break;
-                    }
-
-                    ChessPosition newPos = new ChessPosition(newRow, newCol);
-                    ChessPiece piece = board.getPiece(newPos);
-
-                    if (piece == null) {
-                        moves.add(new ChessMove(pos, newPos, null));  // 빈 칸이면 이동 가능
-                    } else {
-                        if (piece.getTeamColor() != this.getTeamColor()) {
-                            moves.add(new ChessMove(pos, newPos, null));  // 상대 팀 말이면 캡처 가능
-                        }
-                        break;  // 다른 말이 있으면 더 이상 이동 불가능
-                    }
-                }
-            }
-        }
-    }
-
-
-    private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[][] knightMoves = {
-                {-2, -1}, {-2, 1}, {2, -1}, {2, 1},
-                {-1, -2}, {-1, 2}, {1, -2}, {1, 2}
-        };
-
-        for (int[] move : knightMoves) {
-            int newRow = pos.getRow() + move[0];
-            int newCol = pos.getColumn() + move[1];
-
-            // 체스 보드의 유효 범위 체크 (1~8)
-            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                ChessPosition newPos = new ChessPosition(newRow, newCol);
-                ChessPiece piece = board.getPiece(newPos);
-
-                // 비어 있거나 상대 팀의 기물이 있는 경우 이동 가능
-                if (piece == null || piece.getTeamColor() != this.getTeamColor()) {
-                    moves.add(new ChessMove(pos, newPos, null));
-                }
-            }
-        }
-    }
-
-
-    private void addKingMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[] rowMoves = {-1, 0, 1};
-        int[] colMoves = {-1, 0, 1};
-
-        for (int rowChange : rowMoves) {
-            for (int colChange : colMoves) {
-                if (rowChange == 0 && colChange == 0) continue; // Skip current position
-
-                int newRow = pos.getRow() + rowChange;
-                int newCol = pos.getColumn() + colChange;
-
-                // 체스 보드의 유효 범위 체크 (1~8)
-                if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                    ChessPosition newPos = new ChessPosition(newRow, newCol);
-                    ChessPiece piece = board.getPiece(newPos);
-
-                    if (piece == null || piece.getTeamColor() != this.getTeamColor()) {
-                        moves.add(new ChessMove(pos, newPos, null));
-                    }
-                }
-            }
-        }
-    }
-
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ChessPiece that = (ChessPiece) o;
-        return pieceColor == that.pieceColor && type == that.type;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        ChessPiece that = (ChessPiece) obj;
+        return pieceColor == that.pieceColor && pieceType == that.pieceType;
     }
 
-    // Override hashCode() for correct hashing behavior
     @Override
     public int hashCode() {
-        return Objects.hash(pieceColor, type);
+        int result = pieceColor.hashCode();
+        result = 31 * result + pieceType.hashCode();
+        return result;
     }
 
-    // Override toString() for debugging purposes
     @Override
     public String toString() {
-        return pieceColor + " " + type;
-    }
-
-
-    private boolean isValidPosition(ChessPosition pos) {
-        return pos.getRow() >= 1 && pos.getRow() <= 8 && pos.getColumn() >= 1 && pos.getColumn() <= 8;
+        return "ChessPiece{" + "pieceColor=" + pieceColor + ", pieceType=" + pieceType + '}';
     }
 }

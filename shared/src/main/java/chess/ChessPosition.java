@@ -1,7 +1,5 @@
 package chess;
 
-import java.util.Objects;
-
 /**
  * Represents a single square position on a chess board
  * <p>
@@ -9,15 +7,23 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessPosition {
-    private final int row;
-    private final int column;
 
+    private final int row;
+    private final int col;
+
+    /**
+     * Constructs a chess position with given row and column.
+     *
+     * @param row the row position (1-8)
+     * @param col the column position (1-8)
+     * @throws IllegalArgumentException if row or col are out of range
+     */
     public ChessPosition(int row, int col) {
-        if (row<1||row>8||col<1||col>8){
+        if (row < 1 || row > 8 || col < 1 || col > 8) {
             throw new IllegalArgumentException("Row and column must be between 1 and 8.");
         }
         this.row = row;
-        this.column = col;
+        this.col = col;
     }
 
     /**
@@ -33,27 +39,24 @@ public class ChessPosition {
      * 1 codes for the left row
      */
     public int getColumn() {
-        return column;
+        return col;
     }
 
     @Override
-    public boolean equals(Object obj){
+    public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || getClass()!= obj.getClass()) return false;
+        if (obj == null || getClass() != obj.getClass()) return false;
         ChessPosition that = (ChessPosition) obj;
-        return row == that.row && column == that.column;
+        return row == that.row && col == that.col;
     }
-
 
     @Override
-    public int hashCode(){
-        return Objects.hash(row, column);
+    public int hashCode() {
+        return 31 * row + col;
     }
-
 
     @Override
-    public String toString(){
-        return "ChessPosition{" + "row=" + row + ", column=" + column + '}';
+    public String toString() {
+        return "ChessPosition{" + "row=" + row + ", col=" + col + '}';
     }
-
 }

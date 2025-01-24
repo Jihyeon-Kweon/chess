@@ -1,7 +1,7 @@
 package chess;
 
-
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -10,10 +10,11 @@ import java.util.Objects;
  * signature of the existing methods.
  */
 public class ChessBoard {
-    private final ChessPiece[][] board = new ChessPiece[8][8];
+
+    private final Map<ChessPosition, ChessPiece> board;
 
     public ChessBoard() {
-        resetBoard();
+        this.board = new HashMap<>();
     }
 
     /**
@@ -23,14 +24,10 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        int row = position.getRow() - 1; // Convert 1-based index to 0-based
-        int col = position.getColumn() - 1;
-
-        if (isValidPosition(row, col)) {
-            board[row][col] = piece;
-        } else {
-            throw new IllegalArgumentException("Invalid position: " + position);
+        if (position == null || piece == null) {
+            throw new IllegalArgumentException("Position and piece cannot be null.");
         }
+        board.put(position, piece);
     }
 
     /**
@@ -41,13 +38,10 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        int row = position.getRow() - 1;
-        int col = position.getColumn() - 1;
-
-        if (isValidPosition(row, col)) {
-            return board[row][col];
+        if (position == null) {
+            throw new IllegalArgumentException("Position cannot be null.");
         }
-        return null;
+        return board.get(position);
     }
 
     /**
@@ -55,87 +49,45 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        for (int row = 0; row < 8; row++){
-            for (int col = 0; col < 8; col++){
-                board[row][col] = null;
-            }
+        board.clear();
+        // Place initial pieces for white
+        for (int col = 1; col <= 8; col++) {
+            board.put(new ChessPosition(2, col), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
         }
+        board.put(new ChessPosition(1, 1), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK));
+        board.put(new ChessPosition(1, 8), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK));
+        board.put(new ChessPosition(1, 2), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
+        board.put(new ChessPosition(1, 7), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
+        board.put(new ChessPosition(1, 3), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
+        board.put(new ChessPosition(1, 6), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
+        board.put(new ChessPosition(1, 4), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN));
+        board.put(new ChessPosition(1, 5), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
 
-        // pawns
-        for (int col = 0; col < 8; col++){
-            board[1][col] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-            board[6][col] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
+        // Place initial pieces for black
+        for (int col = 1; col <= 8; col++) {
+            board.put(new ChessPosition(7, col), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
         }
-
-        // Place major pieces for White
-        board[0][0] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK);
-        board[0][1] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT);
-        board[0][2] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP);
-        board[0][3] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN);
-        board[0][4] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING);
-        board[0][5] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP);
-        board[0][6] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT);
-        board[0][7] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK);
-
-        // Place major pieces for Black
-        board[7][0] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK);
-        board[7][1] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT);
-        board[7][2] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP);
-        board[7][3] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.QUEEN);
-        board[7][4] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING);
-        board[7][5] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP);
-        board[7][6] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT);
-        board[7][7] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK);
-    }
-
-    private boolean isValidPosition(int row, int col){
-        return row >= 0 && row < 8 && col >= 0 && col < 8;
+        board.put(new ChessPosition(8, 1), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK));
+        board.put(new ChessPosition(8, 8), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK));
+        board.put(new ChessPosition(8, 2), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
+        board.put(new ChessPosition(8, 7), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
+        board.put(new ChessPosition(8, 3), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
+        board.put(new ChessPosition(8, 6), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
+        board.put(new ChessPosition(8, 4), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.QUEEN));
+        board.put(new ChessPosition(8, 5), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING));
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-
         ChessBoard that = (ChessBoard) obj;
-
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                if (!java.util.Objects.equals(this.board[row][col], that.board[row][col])) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return this.board.equals(that.board);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Arrays.deepHashCode(board);
+        return board.hashCode();
     }
-
-    public boolean isPositionValid(int row, int col){
-        return row >= 1 && row <= 8 && col >= 1 && col <= 8;
-    }
-
-    private ChessPosition getEnPassantTargetSquare;
-
-    public void setGetEnPassantTargetSquare(ChessPosition pos){
-        this.getEnPassantTargetSquare = pos;
-    }
-
-    public ChessPosition getEnPassantTargetSquare(){
-        return getEnPassantTargetSquare;
-    }
-    public boolean isEnPassantCapture(ChessPosition pawnPos, ChessPosition targetPos) {
-        ChessPiece adjacentPawn = getPiece(new ChessPosition(pawnPos.getRow(), targetPos.getColumn()));
-
-        if (adjacentPawn != null && adjacentPawn.getPieceType() == ChessPiece.PieceType.PAWN
-                && adjacentPawn.getTeamColor() != getPiece(pawnPos).getTeamColor()) {
-            return targetPos.equals(getEnPassantTargetSquare());
-        }
-        return false;
-    }
-
 
 }
