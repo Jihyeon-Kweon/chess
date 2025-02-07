@@ -17,6 +17,19 @@ public class ChessBoard {
         this.board = new HashMap<>();
     }
 
+    public ChessBoard(ChessBoard otherBoard) {
+        this.board = new HashMap<>();
+        for (Map.Entry<ChessPosition, ChessPiece> entry : otherBoard.board.entrySet()) {
+            ChessPosition position = entry.getKey();
+            ChessPiece piece = entry.getValue();
+            if (piece != null) {
+                this.board.put(position, new ChessPiece(piece.getTeamColor(), piece.getPieceType()));
+            } else {
+                this.board.put(position, null);
+            }
+        }
+    }
+
     /**
      * Adds a chess piece to the chessboard
      *
