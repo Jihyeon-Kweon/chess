@@ -116,7 +116,34 @@ public class ChessGame {
     }
 
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (!isInCheck(teamColor)){
+            return false;
+        }
+
+        for (int row =1; row<=8;row++){
+            for (int col =1;col<=8;col++){
+                ChessPosition position = new ChessPosition(row,col);
+                ChessPiece piece = board.getPiece(position);
+
+                if (piece != null && piece.getTeamColor()==teamColor){
+                    for (ChessMove move: validMoves(position)){
+
+                        ChessBoard tempBoard = new ChessBoard(board);
+                        tempBoard.addPiece(move.getEndPosition(), piece);
+                        tempBoard.addPiece(move.getStartPosition(), null);
+
+                        ChessGame tempGame = new ChessGame();
+                        tempGame.setBoard(tempBoard);
+                        tempGame.setTeamTurn(teamColor);
+
+                        if (!tempGame.isInCheck(teamColor)){
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     public boolean isInStalemate(TeamColor teamColor) {
