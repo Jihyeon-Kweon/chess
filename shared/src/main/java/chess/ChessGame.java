@@ -55,11 +55,24 @@ public class ChessGame {
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
+
         if (piece == null || piece.getTeamColor() != currentTurn) {
-            throw new InvalidMoveException("Invalid move: No piece at start position or wrong turn.");
+            throw new InvalidMoveException("Invalid move: No piece at the start position or wrong team's turn.");
         }
-        board.addPiece(move.getEndPosition(), piece);
-        board.addPiece(move.getStartPosition(), null);  // Remove from start position
+
+        Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
+        if (!validMoves.contains(move)) {
+            throw new InvalidMoveException("Invalid move: This move is not valid for the selected piece.");
+        }
+
+        ChessPiece newPiece = piece;
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN && move.getPromotionPiece() != null) {
+            newPiece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
+        }
+
+        board.addPiece(move.getEndPosition(), newPiece);
+        board.addPiece(move.getStartPosition(), null);
+
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
