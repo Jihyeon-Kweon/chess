@@ -34,7 +34,23 @@ public class ChessGame {
         if (piece == null) {
             return null;
         }
-        return piece.pieceMoves(board, startPosition);
+
+        List<ChessMove> validMoves = new ArrayList<>();
+        Collection<ChessMove> potentialMoves = piece.pieceMoves(board, startPosition);
+
+        for (ChessMove move : potentialMoves) {
+            ChessBoard tempBoard = new ChessBoard(board);
+            tempBoard.addPiece(move.getEndPosition(), piece);
+            tempBoard.addPiece(move.getStartPosition(), null);
+
+            ChessGame tempGame = new ChessGame();
+            tempGame.setBoard(tempBoard);
+            if (!tempGame.isInCheck(piece.getTeamColor())) {
+                validMoves.add(move);
+            }
+        }
+
+        return validMoves;
     }
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
