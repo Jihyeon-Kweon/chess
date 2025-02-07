@@ -76,8 +76,29 @@ public class ChessGame {
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
-    public boolean isInCheck(TeamColor teamColor) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public boolean isInCheck(ChessGame.TeamColor teamColor) {
+        ChessPosition kingPosition = findKingPosition(teamColor);
+
+        if (kingPosition == null) {
+            throw new IllegalStateException("King not found on the board.");
+        }
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if (piece != null && piece.getTeamColor() != teamColor) {
+                    for (ChessMove move : piece.pieceMoves(board, position)) {
+                        if (move.getEndPosition().equals(kingPosition)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public boolean isInCheckmate(TeamColor teamColor) {
