@@ -37,10 +37,14 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        if (position == null || piece == null) {
+        if (position == null) {
             throw new IllegalArgumentException("Position and piece cannot be null.");
         }
-        board.put(position, piece);
+        if(piece == null){
+            board.remove(position);
+        } else{
+            board.put(position, piece);
+        }
     }
 
     /**
