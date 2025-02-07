@@ -15,6 +15,7 @@ public class ChessGame {
     private ChessBoard board;
     private TeamColor currentTurn;
 
+    // Constructor
     public ChessGame() {
         this.board = new ChessBoard();
         this.currentTurn = TeamColor.WHITE;
