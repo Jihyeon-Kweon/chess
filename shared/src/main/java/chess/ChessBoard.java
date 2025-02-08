@@ -56,7 +56,7 @@ public class ChessBoard {
      */
     public ChessPiece getPiece(ChessPosition position) {
         if (position == null) {
-            throw new IllegalArgumentException("Position cannot be null.");
+            throw new IllegalArgumentException("Invalid.");
         }
         return board.get(position);
     }
