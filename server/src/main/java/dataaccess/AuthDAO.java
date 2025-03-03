@@ -20,11 +20,15 @@ public class AuthDAO {
     }
 
     // 특정 인증 토큰 삭제
-    public void deleteAuth(String authToken) {
-        authDB.remove(authToken);
-    }
+//    public void deleteAuth(String authToken) {
+//        authDB.remove(authToken);
+//    }
 
     public void clearAuthTokens() {
         authDB.clear();  // 모든 authToken 삭제
+    }
+
+    public boolean deleteAuth(String authToken){
+        return authDB.remove(authToken) != null;
     }
 }
