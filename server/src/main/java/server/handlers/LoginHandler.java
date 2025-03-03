@@ -20,7 +20,7 @@ public class LoginHandler implements Route{
         try{
             UserData loginRequest = gson.fromJson(req.body(), UserData.class);
 
-            AuthData authData = loginService.login(loginRequest.getUsername(), loginRequest.getPassword());
+            AuthData authData = loginService.login(loginRequest.username(), loginRequest.password());
 
             res.status(200);
             return gson.toJson(authData);
