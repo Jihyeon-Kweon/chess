@@ -19,7 +19,7 @@ public class RegisterService {
         }
 
         if (userDAO.getUser(username)!= null){
-            throw new DataAccessException("Error");
+            throw new DataAccessException("Error: already taken");
         }
 
         UserData newUser = new UserData(username, password, email);
