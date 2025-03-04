@@ -1,36 +1,32 @@
 package server.handlers;
 
 import com.google.gson.Gson;
-import service.ListGamesService;
+import dataaccess.GameDAO;
 import model.GameList;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.logging.ErrorManager;
-
-public class ListGamesHandler implements Route{
+public class ListGamesHandler implements Route {
     @Override
-    public Object handle(Request req, Response res){
-        Gson gson = new Gson();
-        ListGamesService listGamesService = new ListGamesService();
+    public Object handle(Request req, Response res) {
+        try {
+            GameDAO gameDAO = new GameDAO();
+            GameList gameList = gameDAO.getAllGames();
 
-        try{
-            GameList gameList = listGamesService.getGames();
             res.status(200);
-            return gson.toJson(gameList);
-        } catch(Exception e){
+            return new Gson().toJson(gameList);
+        } catch (Exception e) {
             res.status(500);
-            return gson.toJson(new ErrorMessage("Internal Server Error"));
+            return new Gson().toJson(new ErrorResponse("Error: Unable to retrieve games"));
         }
     }
 
-    private static class ErrorMessage{
+    private static class ErrorResponse {
         String message;
 
-        ErrorMessage(String message){
+        ErrorResponse(String message) {
             this.message = message;
         }
     }
-
 }

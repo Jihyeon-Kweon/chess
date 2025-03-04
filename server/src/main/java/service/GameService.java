@@ -2,10 +2,12 @@ package service;
 
 import dataaccess.GameDAO;
 import model.GameData;
+import model.GameCreateRequest;
 
 public class GameService {
-    public GameData createGame(GameData gameRequest){
-        GameDAO gamesDAO = new GameDAO();
-        return gamesDAO.addGame(gameRequest.gameName(), gameRequest.whiteUsername(), gameRequest.blackUsername());
+    private final GameDAO gameDAO = new GameDAO();
+
+    public GameData createGame(GameCreateRequest createRequest) {
+        return gameDAO.addGame(createRequest.gameName(), null, null);
     }
 }
