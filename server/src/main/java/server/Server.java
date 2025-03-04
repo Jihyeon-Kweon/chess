@@ -2,12 +2,15 @@ package server;
 
 import server.handlers.*;
 import spark.*;
+import dataaccess.GameDAO;
 
 public class Server {
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("web");
+
+        GameDAO gameDAO = new GameDAO();
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/clear", new ClearHandler());
@@ -22,7 +25,7 @@ public class Server {
 
         Spark.get("/game", new ListGamesHandler());
 
-        Spark.put("/game", new JoinGameHandler());
+        Spark.put("/game", new JoinGameHandler(gameDAO));
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
         Spark.init();

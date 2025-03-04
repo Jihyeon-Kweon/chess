@@ -2,5 +2,13 @@ package model;
 
 import chess.ChessGame;
 
-public record GameData(int id, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
-}
+import com.google.gson.annotations.SerializedName;
+
+public record GameData(
+        Integer gameID,
+        String whiteUsername,
+        String blackUsername,
+        String gameName,
+        ChessGame game
+) {}
+

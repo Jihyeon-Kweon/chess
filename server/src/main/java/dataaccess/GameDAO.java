@@ -8,8 +8,8 @@ import chess.ChessGame;
 import java.util.ArrayList;
 
 public class GameDAO {
-    private static Map<Integer, GameData> games = new HashMap<>();
     private static int nextId = 1;
+    private static Map<Integer, GameData> games = new HashMap<>();
 
     public void clearGames(){
         games.clear();
@@ -21,11 +21,22 @@ public class GameDAO {
     }
 
     public GameData addGame(String gameName) {
-        GameData newGame = new GameData(nextId, null, null, gameName, new ChessGame());
-        games.put(nextId, newGame);
+        return addGame(gameName, null, null);
+    }
+
+    public GameData addGame(String gameName, String whiteUsername, String blackUsername) {
+        int gameId = nextId;
+        GameData newGame = new GameData(gameId, whiteUsername, blackUsername, gameName, new ChessGame());
+
+        System.out.println("Game Created: " + newGame);
+        System.out.println("Game ID in addGame(): "+newGame.gameID());
+
+        games.put(gameId, newGame);
         nextId++;
         return newGame;
     }
+
+
 
     public GameData getGameById(int gameId){
         return games.get(gameId);
@@ -34,14 +45,14 @@ public class GameDAO {
     public GameData joinGame(int gameId, String username, ChessGame.TeamColor teamColor) {
         GameData game = games.get(gameId);
         if (game == null) {
-            throw new IllegalStateException("Error: Game not found");
+            return null;
         }
 
-        boolean alreadyWhite = username.equals(game.whiteUsername());
-        boolean alreadyBlack = username.equals(game.blackUsername());
+        boolean alreadyWhite = game.whiteUsername()!=null;
+        boolean alreadyBlack = game.blackUsername()!=null;
 
         if (alreadyWhite || alreadyBlack) {
-            throw new IllegalStateException("Error: Player is already in the game");
+            return null;
         }
 
         String newWhite = game.whiteUsername();
@@ -51,20 +62,21 @@ public class GameDAO {
             if (newWhite == null || newWhite.isEmpty()) {
                 newWhite = username;
             } else {
-                throw new IllegalStateException("Error: White position already taken");
+                return null; // WHITE 자리 이미 찼으면 참가 불가능
             }
         } else if (teamColor == ChessGame.TeamColor.BLACK) {
             if (newBlack == null || newBlack.isEmpty()) {
                 newBlack = username;
             } else {
-                throw new IllegalStateException("Error: Black position already taken");
+                return null; // BLACK 자리 이미 찼으면 참가 불가능
             }
         } else {
-            throw new IllegalStateException("Error: Invalid team color");
+            return null;
         }
 
-        GameData updatedGame = new GameData(game.id(), newWhite, newBlack, game.gameName(), game.game());
+        GameData updatedGame = new GameData(game.gameID(), newWhite, newBlack, game.gameName(), game.game());
         games.put(gameId, updatedGame);
         return updatedGame;
     }
+
 }

@@ -8,6 +8,6 @@ public class GameService {
     private final GameDAO gameDAO = new GameDAO();
 
     public GameData createGame(GameCreateRequest createRequest) {
-        return gameDAO.addGame(createRequest.gameName(), null, null);
+        return gameDAO.addGame(createRequest.gameName());
     }
 }

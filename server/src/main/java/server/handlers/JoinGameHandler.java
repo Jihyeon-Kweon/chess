@@ -1,21 +1,24 @@
 package server.handlers;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
+import model.AuthData;
 import model.GameData;
 import model.JoinGameRequest;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-import chess.ChessGame;
+
+import java.util.Objects;
 
 public class JoinGameHandler implements Route {
     private final GameDAO gameDAO;
-    private final Gson gson;
+    private final Gson gson = new Gson();
 
     public JoinGameHandler(GameDAO gameDAO) {
         this.gameDAO = gameDAO;
-        this.gson = new Gson();
     }
 
     @Override
@@ -23,40 +26,51 @@ public class JoinGameHandler implements Route {
         System.out.println("Received request: " + req.body());
 
         try {
-            // 요청 JSON 파싱
+            AuthDAO authDAO = new AuthDAO();
+            String authToken = req.headers("authorization");
+            AuthData Object = authDAO.getAuth(authToken);
+            if(Object == null){
+                res.status(401);
+                return gson.toJson(new ErrorResponse("Error: unauthorized"));
+            }
+
             JoinGameRequest joinRequest = gson.fromJson(req.body(), JoinGameRequest.class);
             System.out.println("Parsed request: " + joinRequest);
+            if (!joinRequest.playerColor().equals("WHITE") && !joinRequest.playerColor().equals("BLACK")) {
+                res.status(400);
+                return gson.toJson(new ErrorResponse("Error: bad request"));
+            }
 
-            // gameId 확인
-            GameData game = gameDAO.getGameById(joinRequest.gameId());
+
+
+            GameData game = gameDAO.getGameById(joinRequest.gameID());
             System.out.println("Fetched game: " + game);
 
             if (game == null) {
-                res.status(404);
+                res.status(400);
                 return gson.toJson(new ErrorResponse("Error: Game not found"));
             }
-
-            ChessGame.TeamColor teamColor = joinRequest.teamColor();
-            if (teamColor == null) {
-                res.status(400);
-                return gson.toJson(new ErrorResponse("Error: Team color must be specified"));
+            ChessGame.TeamColor teamColor;
+            if (Objects.equals(joinRequest.playerColor(), "WHITE")){
+                teamColor = ChessGame.TeamColor.WHITE;
+            } else{
+                teamColor = ChessGame.TeamColor.BLACK;
             }
 
-            try {
-                GameData updatedGame = gameDAO.joinGame(joinRequest.gameId(), joinRequest.username(), teamColor);
-                System.out.println("Updated game: " + updatedGame);
+            GameData updatedGame = gameDAO.joinGame(joinRequest.gameID(), Object.username(), teamColor);
 
-                res.status(200);
-                return gson.toJson(updatedGame);
-            } catch (IllegalStateException e) {
+            if (updatedGame == null) {
                 res.status(403);
-                return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
+                return gson.toJson(new ErrorResponse("Error: Could not join game"));
             }
+
+            System.out.println("Updated game: " + updatedGame);
+            res.status(200);
+            return gson.toJson(updatedGame);
 
         } catch (Exception e) {
-            // JSON 파싱 실패 또는 기타 오류 발생 시 400 에러 반환
             res.status(400);
-            return gson.toJson(new ErrorResponse("Error: Invalid request format"));
+            return gson.toJson(new ErrorResponse("Error: Invalid request"));
         }
     }
 
