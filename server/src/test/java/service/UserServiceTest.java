@@ -21,7 +21,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegister_Success() throws DataAccessException {
+    void testRegisterSuccess() throws DataAccessException {
         UserData user = new UserData("alice", "password123", "alice@example.com");
         AuthData auth = userService.register(user);
 

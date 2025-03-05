@@ -35,20 +35,20 @@ public class GameServiceTest {
 
     /** ✅ 성공 케이스: 게임 리스트 조회 */
     @Test
-    void testListGames_Success() throws DataAccessException {
+    void testListGamesSuccess() throws DataAccessException {
         List<GameData> games = gameService.listGames(authToken);
         assertNotNull(games);
     }
 
     /** ❌ 실패 케이스: 잘못된 authToken */
     @Test
-    void testListGames_Fail_InvalidAuthToken() {
+    void testListGamesFailInvalidAuthToken() {
         assertThrows(DataAccessException.class, () -> gameService.listGames("invalid_token"));
     }
 
     /** ✅ 성공 케이스: 게임 생성 */
     @Test
-    void testCreateGame_Success() throws DataAccessException {
+    void testCreateGameSuccess() throws DataAccessException {
         GameData game = gameService.createGame(authToken, "Chess Match");
         assertNotNull(game);
         assertEquals("Chess Match", game.gameName());
@@ -56,19 +56,17 @@ public class GameServiceTest {
 
     /** ❌ 실패 케이스: 게임 이름 없이 생성 */
     @Test
-    void testCreateGame_Fail_NoName() {
+    void testCreateGameFailNoName() {
         assertThrows(DataAccessException.class, () -> gameService.createGame(authToken, ""));
     }
 
-    /** ❌ 실패 케이스: 잘못된 authToken */
     @Test
-    void testCreateGame_Fail_InvalidAuthToken() {
+    void testCreateGameFailInvalidAuthToken() {
         assertThrows(DataAccessException.class, () -> gameService.createGame("invalid_token", "Test Game"));
     }
 
-    /** ✅ 성공 케이스: 게임 참여 */
     @Test
-    void testJoinGame_Success() throws DataAccessException {
+    void testJoinGameSuccess() throws DataAccessException {
         GameData game = gameService.createGame(authToken, "Chess Game");
         gameService.joinGame(authToken, game.gameID(), "WHITE");
 
@@ -77,20 +75,18 @@ public class GameServiceTest {
     }
 
     @Test
-    void testJoinGame_Fail_InvalidGame() {
+    void testJoinGameFailInvalidGame() {
         assertThrows(DataAccessException.class, () -> gameService.joinGame(authToken, 99999, "WHITE"));
     }
 
-    /** ❌ 실패 케이스: 잘못된 색상 입력 */
     @Test
-    void testJoinGame_Fail_InvalidColor() throws DataAccessException {
+    void testJoinGameFailInvalidColor() throws DataAccessException {
         GameData game = gameService.createGame(authToken, "Chess Game");
         assertThrows(DataAccessException.class, () -> gameService.joinGame(authToken, game.gameID(), "GREEN"));
     }
 
-    /** ❌ 실패 케이스: 이미 차지된 자리 */
     @Test
-    void testJoinGame_Fail_AlreadyTaken() throws DataAccessException {
+    void testJoinGameFailAlreadyTaken() throws DataAccessException {
         GameData game = gameService.createGame(authToken, "Chess Game");
         gameService.joinGame(authToken, game.gameID(), "WHITE");
 
