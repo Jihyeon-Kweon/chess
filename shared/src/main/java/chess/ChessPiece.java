@@ -91,7 +91,9 @@ public class ChessPiece {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
         ChessPiece that = (ChessPiece) obj;
         return pieceColor == that.pieceColor && pieceType == that.pieceType;
     }

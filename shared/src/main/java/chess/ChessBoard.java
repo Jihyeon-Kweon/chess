@@ -99,7 +99,9 @@ public class ChessBoard {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
         ChessBoard that = (ChessBoard) obj;
         return this.board.equals(that.board);
     }

@@ -31,7 +31,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegister_Fail_AlreadyExists() throws DataAccessException {
+    void testRegisterFailAlreadyExists() throws DataAccessException {
         UserData user1 = new UserData("bob", "securepass", "bob@example.com");
         userService.register(user1);
 
@@ -40,13 +40,13 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegister_Fail_MissingUsername() {
+    void testRegisterFailMissingUsername() {
         UserData user = new UserData(null, "password", "user@example.com");
         assertThrows(DataAccessException.class, () -> userService.register(user));
     }
 
     @Test
-    void testLogin_Success() throws DataAccessException {
+    void testLoginSuccess() throws DataAccessException {
         UserData user = new UserData("charlie", "mypassword", "charlie@example.com");
         userService.register(user);
 
@@ -57,12 +57,12 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLogin_Fail_UserNotFound() {
+    void testLoginFailUserNotFound() {
         assertThrows(DataAccessException.class, () -> userService.login("nonexistent", "password"));
     }
 
     @Test
-    void testLogin_Fail_WrongPassword() throws DataAccessException {
+    void testLoginFailWrongPassword() throws DataAccessException {
         UserData user = new UserData("dave", "correctpass", "dave@example.com");
         userService.register(user);
 
@@ -70,7 +70,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLogout_Success() throws DataAccessException {
+    void testLogoutSuccess() throws DataAccessException {
         UserData user = new UserData("eve", "pass123", "eve@example.com");
         AuthData auth = userService.register(user);
 
@@ -79,7 +79,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLogout_Fail_InvalidToken() {
+    void testLogoutFailInvalidToken() {
         assertThrows(DataAccessException.class, () -> userService.logout("invalid_token"));
     }
 }
