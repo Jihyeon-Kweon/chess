@@ -88,7 +88,9 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
+        if (this == obj) {
+            return true;
+        }
         if (obj == null || getClass() != obj.getClass()) return false;
         ChessPiece that = (ChessPiece) obj;
         return pieceColor == that.pieceColor && pieceType == that.pieceType;
@@ -161,7 +163,9 @@ public class ChessPiece {
             while (true) {
                 row += dir[0];
                 col += dir[1];
-                if (row < 1 || row > 8 || col < 1 || col > 8) break;
+                if (row < 1 || row > 8 || col < 1 || col > 8) {
+                    break;
+                }
 
                 ChessPosition newPos = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(newPos);
