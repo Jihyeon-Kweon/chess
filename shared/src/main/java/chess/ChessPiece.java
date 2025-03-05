@@ -181,23 +181,29 @@ public class ChessPiece {
         }
     }
 
-    private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
-        int[][] knightMoves = {
-                {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
-                {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
-        };
+    private void addMovesByOffsets(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos, int[][] offsets) {
+        for (int[] offset : offsets) {
+            int newRow = pos.getRow() + offset[0];
+            int newCol = pos.getColumn() + offset[1];
 
-        for (int[] move : knightMoves) {
-            int newRow = pos.getRow() + move[0];
-            int newCol = pos.getColumn() + move[1];
             if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
                 ChessPosition newPos = new ChessPosition(newRow, newCol);
                 ChessPiece target = board.getPiece(newPos);
+
                 if (target == null || target.getTeamColor() != pieceColor) {
                     moves.add(new ChessMove(pos, newPos, null));
                 }
             }
         }
+    }
+
+
+    private void addKnightMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
+        int[][] knightMoves = {
+                {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+                {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+        };
+        addMovesByOffsets(moves, board, pos, knightMoves);
     }
 
     private void addKingMoves(Collection<ChessMove> moves, ChessBoard board, ChessPosition pos) {
@@ -205,18 +211,8 @@ public class ChessPiece {
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1},
                 {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
         };
-
-        for (int[] move : kingMoves) {
-            int newRow = pos.getRow() + move[0];
-            int newCol = pos.getColumn() + move[1];
-            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                ChessPosition newPos = new ChessPosition(newRow, newCol);
-                ChessPiece target = board.getPiece(newPos);
-                if (target == null || target.getTeamColor() != pieceColor) {
-                    moves.add(new ChessMove(pos, newPos, null));
-                }
-            }
-        }
+        addMovesByOffsets(moves, board, pos, kingMoves);
     }
+
 
 }
