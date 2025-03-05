@@ -29,7 +29,11 @@ public class UserHandler {
                 res.status(200);
                 return gson.toJson(auth);
             } catch (DataAccessException e) {
-                res.status(400);
+                if (e.getMessage().contains("already taken")) {
+                    res.status(403);  // 중복된 유저 등록 시 403 Forbidden 반환
+                } else {
+                    res.status(400);  // 그 외의 경우 400 Bad Request
+                }
 
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("message", "Error: " + e.getMessage());
@@ -37,6 +41,7 @@ public class UserHandler {
             }
         };
     }
+
 
     public Route login() {
         return (Request req, Response res) -> {

@@ -8,10 +8,13 @@ import model.GameData;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameService {
     private final GameDAO gameDAO;
     private final AuthDAO authDAO;
+
+    private static final AtomicInteger gameIDCounter = new AtomicInteger(1);
 
     public GameService(GameDAO gameDAO, AuthDAO authDAO) {
         this.gameDAO = gameDAO;
@@ -35,11 +38,17 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
-        int gameID = UUID.randomUUID().hashCode();
+        int gameID = gameIDCounter.getAndIncrement();
         GameData game = new GameData(gameID, null, null, gameName, null);
+
         gameDAO.createGame(game);
 
-        return game;
+        GameData savedGame = gameDAO.getGame(gameID);
+        if (savedGame == null || savedGame.gameID() != gameID) {
+            throw new DataAccessException("Error: failed to create game (invalid game ID)");
+        }
+
+        return savedGame;
     }
 
     public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
