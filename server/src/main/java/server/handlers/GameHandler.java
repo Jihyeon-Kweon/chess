@@ -20,7 +20,6 @@ public class GameHandler {
         this.gameService = gameService;
     }
 
-
     public Route listGames() {
         return (Request req, Response res) -> {
             try {
@@ -28,16 +27,11 @@ public class GameHandler {
                 List<GameData> games = gameService.listGames(authToken);
 
                 res.status(200);
-
                 Map<String, Object> response = new HashMap<>();
                 response.put("games", games);
                 return gson.toJson(response);
             } catch (DataAccessException e) {
-                res.status(401);
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                return handleErrorResponse(res, e);
             }
         };
     }
@@ -52,11 +46,7 @@ public class GameHandler {
                 res.status(200);
                 return gson.toJson(game);
             } catch (DataAccessException e) {
-                res.status(e.getMessage().contains("unauthorized") ? 401 : 400);
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                return handleErrorResponse(res, e);
             }
         };
     }
@@ -71,14 +61,23 @@ public class GameHandler {
                 res.status(200);
                 return gson.toJson(new ResponseObject());
             } catch (DataAccessException e) {
-                res.status(e.getMessage().contains("unauthorized") ? 401 :
-                        e.getMessage().contains("already taken") ? 403 : 400);
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                return handleErrorResponse(res, e);
             }
         };
+    }
+
+    /** ✅ 중복된 오류 응답 처리를 위한 메서드 */
+    private String handleErrorResponse(Response res, DataAccessException e) {
+        int statusCode = switch (e.getMessage()) {
+            case "Error: unauthorized" -> 401;
+            case "Error: already taken" -> 403;
+            default -> 400;
+        };
+        res.status(statusCode);
+
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Error: " + e.getMessage());
+        return gson.toJson(errorResponse);
     }
 
     // JoinGame 요청 객체
