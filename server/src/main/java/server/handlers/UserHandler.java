@@ -29,19 +29,11 @@ public class UserHandler {
                 res.status(200);
                 return gson.toJson(auth);
             } catch (DataAccessException e) {
-                if (e.getMessage().contains("already taken")) {
-                    res.status(403);  // 중복된 유저 등록 시 403 Forbidden 반환
-                } else {
-                    res.status(400);  // 그 외의 경우 400 Bad Request
-                }
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                int statusCode = e.getMessage().contains("already taken") ? 403 : 400;
+                return handleErrorResponse(res, statusCode, e.getMessage());
             }
         };
     }
-
 
     public Route login() {
         return (Request req, Response res) -> {
@@ -52,11 +44,7 @@ public class UserHandler {
                 res.status(200);
                 return gson.toJson(auth);
             } catch (DataAccessException e) {
-                res.status(401);
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                return handleErrorResponse(res, 401, e.getMessage());
             }
         };
     }
@@ -70,13 +58,17 @@ public class UserHandler {
                 res.status(200);
                 return gson.toJson(new ResponseObject());
             } catch (DataAccessException e) {
-                res.status(401);
-
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Error: " + e.getMessage());
-                return gson.toJson(errorResponse);
+                return handleErrorResponse(res, 401, e.getMessage());
             }
         };
+    }
+
+    /** 공통 오류 응답 처리 메서드 */
+    private String handleErrorResponse(Response res, int statusCode, String errorMessage) {
+        res.status(statusCode);
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Error: " + errorMessage);
+        return gson.toJson(errorResponse);
     }
 
     private static class ResponseObject {}
