@@ -38,16 +38,9 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
-        int gameID = gameIDCounter.getAndIncrement();
-        GameData game = new GameData(gameID, null, null, gameName, null);
-
-        gameDAO.createGame(game);
-
-        GameData savedGame = gameDAO.getGame(gameID);
-        if (savedGame == null || savedGame.gameID() != gameID) {
-            throw new DataAccessException("Error: failed to create game (invalid game ID)");
-        }
-
+        GameData game = new GameData(0, null, null, gameName, null);
+        int gameID = gameDAO.createGame(game);
+        GameData savedGame = new GameData(gameID, null, null, gameName, null);
         return savedGame;
     }
 

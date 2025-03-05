@@ -11,9 +11,10 @@ public class MemoryGameDAO implements GameDAO {
     private int nextGameID = 1;
 
     @Override
-    public void createGame(GameData game) throws DataAccessException {
+    public int createGame(GameData game) throws DataAccessException {
         game = new GameData(nextGameID++, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
         games.put(game.gameID(), game);
+        return game.gameID();
     }
 
     @Override
