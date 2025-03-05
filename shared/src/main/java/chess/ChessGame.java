@@ -25,7 +25,9 @@ public class ChessGame {
 
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null) return null;
+        if (piece == null) {
+            return null;
+        }
 
         List<ChessMove> validMoves = new ArrayList<>();
         Collection<ChessMove> potentialMoves = piece.pieceMoves(board, startPosition);
@@ -62,7 +64,9 @@ public class ChessGame {
 
     public boolean isInCheck(ChessGame.TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition(teamColor);
-        if (kingPosition == null) throw new IllegalStateException("King not found on the board.");
+        if (kingPosition == null) {
+            throw new IllegalStateException("King not found on the board.");
+        }
         return isThreatened(kingPosition, teamColor);
     }
 
