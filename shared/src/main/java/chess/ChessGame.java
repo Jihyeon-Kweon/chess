@@ -79,28 +79,30 @@ public class ChessGame {
 
     public boolean isInCheck(ChessGame.TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition(teamColor);
-
         if (kingPosition == null) {
             throw new IllegalStateException("King not found on the board.");
         }
+        return isThreatened(kingPosition, teamColor);
+    }
 
+    private boolean isThreatened(ChessPosition position, TeamColor teamColor) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
+                ChessPosition enemyPos = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(enemyPos);
 
                 if (piece != null && piece.getTeamColor() != teamColor) {
-                    for (ChessMove move : piece.pieceMoves(board, position)) {
-                        if (move.getEndPosition().equals(kingPosition)) {
+                    for (ChessMove move : piece.pieceMoves(board, enemyPos)) {
+                        if (move.getEndPosition().equals(position)) {
                             return true;
                         }
                     }
                 }
             }
         }
-
         return false;
     }
+
 
     private ChessPosition findKingPosition(TeamColor teamColor) {
         for (int row = 1; row <= 8; row ++){
@@ -117,35 +119,41 @@ public class ChessGame {
     }
 
     public boolean isInCheckmate(TeamColor teamColor) {
-        if (!isInCheck(teamColor)){
-            return false;
-        }
+        return isInCheck(teamColor) && !canEscapeCheck(teamColor);
+    }
 
-        for (int row =1; row<=8;row++){
-            for (int col =1;col<=8;col++){
-                ChessPosition position = new ChessPosition(row,col);
+    private boolean canEscapeCheck(TeamColor teamColor) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
 
-                if (piece != null && piece.getTeamColor()==teamColor){
-                    for (ChessMove move: validMoves(position)){
-
-                        ChessBoard tempBoard = new ChessBoard(board);
-                        tempBoard.addPiece(move.getEndPosition(), piece);
-                        tempBoard.addPiece(move.getStartPosition(), null);
-
-                        ChessGame tempGame = new ChessGame();
-                        tempGame.setBoard(tempBoard);
-                        tempGame.setTeamTurn(teamColor);
-
-                        if (!tempGame.isInCheck(teamColor)){
-                            return false;
+                if (piece != null && piece.getTeamColor() == teamColor) {
+                    for (ChessMove move : validMoves(position)) {
+                        if (!wouldStillBeInCheck(teamColor, move)) {
+                            return true;
                         }
                     }
                 }
             }
         }
-        return true;
+        return false;
     }
+
+    private boolean wouldStillBeInCheck(TeamColor teamColor, ChessMove move) {
+        ChessBoard tempBoard = new ChessBoard(board);
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+
+        tempBoard.addPiece(move.getEndPosition(), piece);
+        tempBoard.addPiece(move.getStartPosition(), null);
+
+        ChessGame tempGame = new ChessGame();
+        tempGame.setBoard(tempBoard);
+        tempGame.setTeamTurn(teamColor);
+
+        return tempGame.isInCheck(teamColor);
+    }
+
 
     public boolean isInStalemate(TeamColor teamColor) {
         if (isInCheck(teamColor)){
