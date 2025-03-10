@@ -10,27 +10,35 @@ public class MySQLGameDAO implements GameDAO {
     @Override
     public int createGame(GameData game) throws DataAccessException {
         String sql = "INSERT INTO games (game_name, white_username, black_username, state) VALUES (?, ?, ?, ?)";
-
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, game.gameName());
             stmt.setString(2, game.whiteUsername());
             stmt.setString(3, game.blackUsername());
-            stmt.setString(4, "{}");
+            stmt.setString(4, "initial_state");
 
-            stmt.executeUpdate();
+            // INSERT 실행
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DataAccessException("Error: Game insertion failed");
+            }
 
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int gameID = generatedKeys.getInt(1);
+                    conn.commit();
+                    return gameID;
+                } else {
+                    throw new DataAccessException("Error: Creating game failed, no ID obtained.");
                 }
             }
+
         } catch (SQLException e) {
-            throw new DataAccessException("Error creating game: " + e.getMessage());
+            throw new DataAccessException("Error inserting game: " + e.getMessage());
         }
-        throw new DataAccessException("Error: Game ID not generated.");
     }
+
 
     @Override
     public GameData getGame(int gameID) throws DataAccessException {

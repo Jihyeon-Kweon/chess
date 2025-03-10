@@ -26,7 +26,8 @@ public class DatabaseManager {
 
                 var host = props.getProperty("db.host");
                 var port = Integer.parseInt(props.getProperty("db.port"));
-                CONNECTION_URL = String.format("jdbc:mysql://%s:%d", host, port);
+                CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", host, port, DATABASE_NAME);
+
             }
         } catch (Exception ex) {
             throw new RuntimeException("unable to process db.properties. " + ex.getMessage());
@@ -62,11 +63,17 @@ public class DatabaseManager {
      */
     static Connection getConnection() throws DataAccessException {
         try {
-            var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
-            conn.setCatalog(DATABASE_NAME);
+            System.out.println("Connecting to database: " + CONNECTION_URL);
+            System.out.println("Using database: " + DATABASE_NAME);
+            System.out.println("User: " + USER);
+
+            Connection conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
+            conn.setAutoCommit(false);
+
             return conn;
         } catch (SQLException e) {
-            throw new DataAccessException(e.getMessage());
+            throw new DataAccessException("Database connection failed: " + e.getMessage());
         }
     }
+
 }
