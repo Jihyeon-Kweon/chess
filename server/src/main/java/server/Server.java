@@ -1,8 +1,6 @@
 package server;
 
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.*;
 import service.ClearService;
 import service.GameService;
 import service.UserService;
@@ -17,8 +15,8 @@ public class Server {
         Spark.staticFiles.location("web");
 
         // DAO 객체 생성
-        var userDAO = new MemoryUserDAO();
-        var gameDAO = new MemoryGameDAO();
+        var userDAO = new MySQLUserDAO();
+        var gameDAO = new MySQLGameDAO();
         var authDAO = new MemoryAuthDAO();
 
         // Service 객체 생성
