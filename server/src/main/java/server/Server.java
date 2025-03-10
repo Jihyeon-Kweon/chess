@@ -17,7 +17,7 @@ public class Server {
         // DAO 객체 생성
         var userDAO = new MySQLUserDAO();
         var gameDAO = new MySQLGameDAO();
-        var authDAO = new MemoryAuthDAO();
+        var authDAO = new MySQLAuthDAO();
 
         // Service 객체 생성
         var clearService = new ClearService(userDAO, gameDAO, authDAO);
