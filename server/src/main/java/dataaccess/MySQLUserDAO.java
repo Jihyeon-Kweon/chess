@@ -3,21 +3,22 @@ package dataaccess;
 import model.UserData;
 
 import java.sql.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class MySQLUserDAO implements UserDAO {
 
     @Override
     public void insertUser(UserData user) throws DataAccessException {
         String sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
+
             stmt.setString(1, user.username());
-            stmt.setString(2, user.password());
+            stmt.setString(2, hashedPassword);
             stmt.setString(3, user.email());
             stmt.executeUpdate();
-
         } catch (SQLException e) {
             throw new DataAccessException("Error inserting user: " + e.getMessage());
         }
@@ -28,22 +29,18 @@ public class MySQLUserDAO implements UserDAO {
         String sql = "SELECT username, password, email FROM users WHERE username = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, username);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return new UserData(
-                            rs.getString("username"),
-                            rs.getString("password"),
-                            rs.getString("email")
-                    );
-                }
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String hashedPassword = rs.getString("password");
+                return new UserData(rs.getString("username"), hashedPassword, rs.getString("email"));
             }
+            return null;
         } catch (SQLException e) {
             throw new DataAccessException("Error retrieving user: " + e.getMessage());
         }
-        return null;
     }
+
 
     @Override
     public void clear() throws DataAccessException {
