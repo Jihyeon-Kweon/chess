@@ -2,6 +2,7 @@ package chess;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.google.gson.annotations.Expose;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -11,6 +12,7 @@ import java.util.Map;
  */
 public class ChessBoard {
 
+    @Expose
     private final Map<ChessPosition, ChessPiece> board;
 
     public ChessBoard() {

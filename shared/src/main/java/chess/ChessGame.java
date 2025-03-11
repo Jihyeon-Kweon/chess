@@ -3,10 +3,15 @@ package chess;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 public class ChessGame {
 
+    @Expose
     private ChessBoard board;
+    @Expose
     private TeamColor currentTurn;
 
     public ChessGame() {
