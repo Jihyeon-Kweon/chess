@@ -57,18 +57,27 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
-        // 자리 체크
-        if ("WHITE".equalsIgnoreCase(playerColor) && game.whiteUsername() != null ||
-                "BLACK".equalsIgnoreCase(playerColor) && game.blackUsername() != null) {
-            throw new DataAccessException("Error: already taken");
+        if (auth.username().equals(game.whiteUsername()) || auth.username().equals(game.blackUsername())) {
+            throw new DataAccessException("Error: already taken by the same user");
         }
 
+        // **WHITE 자리 체크**
         if ("WHITE".equalsIgnoreCase(playerColor)) {
+            if (game.whiteUsername() != null) {
+                throw new DataAccessException("Error: already taken");
+            }
             game = new GameData(game.gameID(), auth.username(), game.blackUsername(), game.gameName(), game.game());
-        } else {
+        }
+
+        // **BLACK 자리 체크**
+        else if ("BLACK".equalsIgnoreCase(playerColor)) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: already taken");
+            }
             game = new GameData(game.gameID(), game.whiteUsername(), auth.username(), game.gameName(), game.game());
         }
 
         gameDAO.updateGame(game);
     }
+
 }
