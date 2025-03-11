@@ -21,12 +21,16 @@ public class GameServiceTest {
 
     @BeforeEach
     void setUp() throws DataAccessException {
-        gameDAO = new MemoryGameDAO();
-        authDAO = new MemoryAuthDAO();
-        userDAO = new MemoryUserDAO();
+        gameDAO = new MySQLGameDAO();
+        authDAO = new MySQLAuthDAO();
+        userDAO = new MySQLUserDAO();
 
         gameService = new GameService(gameDAO, authDAO);
         userService = new UserService(userDAO, authDAO);
+
+        gameDAO.clear();
+        authDAO.clear();
+        userDAO.clear();
 
         // 유저 등록 후 인증 토큰 발급
         UserData user = new UserData("player1", "chess123", "player1@example.com");
