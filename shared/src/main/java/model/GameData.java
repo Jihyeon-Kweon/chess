@@ -13,7 +13,4 @@ public record GameData(int gameID, String whiteUsername, String blackUsername, S
         return new Gson().fromJson(gameStateJson, ChessGame.class);
     }
 
-    public GameData withGameID(int newGameID) {
-        return new GameData(newGameID, whiteUsername, blackUsername, gameName, game);
-    }
 }

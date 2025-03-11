@@ -10,10 +10,10 @@ import java.io.IOException;
 
 public class DatabaseManager {
     private static final String DB_PROPERTIES = "/db.properties";
-    private static String DB_URL;
-    private static String DB_USER;
-    private static String DB_PASSWORD;
-    private static String DB_NAME;
+    private static final String DB_URL;
+    private static final String DB_USER;
+    private static final String DB_PASSWORD;
+    private static final String DB_NAME;
 
     static {
         try (InputStream input = DatabaseManager.class.getResourceAsStream(DB_PROPERTIES)) {
