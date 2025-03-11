@@ -14,6 +14,8 @@ public class Server {
         Spark.port(desiredPort);
         Spark.staticFiles.location("web");
 
+        DatabaseManager.initializeDatabase();
+
         // DAO 객체 생성
         var userDAO = new MySQLUserDAO();
         var gameDAO = new MySQLGameDAO();

@@ -1,79 +1,108 @@
 package dataaccess;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
+import java.io.InputStream;
+import java.io.IOException;
 
 public class DatabaseManager {
-    private static final String DATABASE_NAME;
-    private static final String USER;
-    private static final String PASSWORD;
-    private static final String CONNECTION_URL;
+    private static final String DB_PROPERTIES = "/db.properties";
+    private static String DB_URL;
+    private static String DB_USER;
+    private static String DB_PASSWORD;
+    private static String DB_NAME;
 
-    /*
-     * Load the database information for the db.properties file.
-     */
     static {
-        try {
-            try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
-                if (propStream == null) {
-                    throw new Exception("Unable to load db.properties");
-                }
-                Properties props = new Properties();
-                props.load(propStream);
-                DATABASE_NAME = props.getProperty("db.name");
-                USER = props.getProperty("db.user");
-                PASSWORD = props.getProperty("db.password");
-
-                var host = props.getProperty("db.host");
-                var port = Integer.parseInt(props.getProperty("db.port"));
-                CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", host, port, DATABASE_NAME);
-
+        try (InputStream input = DatabaseManager.class.getResourceAsStream(DB_PROPERTIES)) {
+            Properties prop = new Properties();
+            if (input == null) {
+                throw new IOException("Unable to find db.properties");
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("unable to process db.properties. " + ex.getMessage());
+            prop.load(input);
+
+            DB_URL = "jdbc:mysql://" + prop.getProperty("db.host") + ":" + prop.getProperty("db.port") + "/";
+            DB_NAME = prop.getProperty("db.name");
+            DB_USER = prop.getProperty("db.user");
+            DB_PASSWORD = prop.getProperty("db.password");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Failed to load database properties: " + ex.getMessage());
         }
     }
 
-    /**
-     * Creates the database if it does not already exist.
-     */
-    static void createDatabase() throws DataAccessException {
-        try {
-            var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
-            var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
-            try (var preparedStatement = conn.prepareStatement(statement)) {
-                preparedStatement.executeUpdate();
-            }
+    /** ✅ DB 연결 가져오기 */
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL + DB_NAME, DB_USER, DB_PASSWORD);
+    }
+
+    /** ✅ DB 및 테이블 자동 생성 */
+    public static void initializeDatabase() {
+        createDatabase(); // 1️⃣ 데이터베이스 생성
+        createTables();   // 2️⃣ 테이블 생성
+    }
+
+    /** ✅ 데이터베이스 생성 (없으면 생성) */
+    private static void createDatabase() {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement()) {
+
+            String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS " + DB_NAME;
+            stmt.executeUpdate(createDatabaseSQL);
+            System.out.println("✅ Database checked/created: " + DB_NAME);
+
         } catch (SQLException e) {
-            throw new DataAccessException(e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error creating database: " + e.getMessage());
         }
     }
 
-    /**
-     * Create a connection to the database and sets the catalog based upon the
-     * properties specified in db.properties. Connections to the database should
-     * be short-lived, and you must close the connection when you are done with it.
-     * The easiest way to do that is with a try-with-resource block.
-     * <br/>
-     * <code>
-     * try (var conn = DbInfo.getConnection(databaseName)) {
-     * // execute SQL statements.
-     * }
-     * </code>
-     */
-    static Connection getConnection() throws DataAccessException {
-        try {
-            System.out.println("Connecting to database: " + CONNECTION_URL);
-            System.out.println("Using database: " + DATABASE_NAME);
-            System.out.println("User: " + USER);
+    /** ✅ 테이블 생성 */
+    private static void createTables() {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
 
-            Connection conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
-            conn.setAutoCommit(false);
+            // ✅ users 테이블 생성
+            String createUsersTable = """
+                CREATE TABLE IF NOT EXISTS users (
+                    username VARCHAR(50) PRIMARY KEY,
+                    password VARCHAR(255) NOT NULL,
+                    email VARCHAR(100) NOT NULL
+                )
+            """;
+            stmt.executeUpdate(createUsersTable);
 
-            return conn;
+            // ✅ games 테이블 생성
+            String createGamesTable = """
+                CREATE TABLE IF NOT EXISTS games (
+                    gameID INT AUTO_INCREMENT PRIMARY KEY,
+                    whiteUsername VARCHAR(50),
+                    blackUsername VARCHAR(50),
+                    gameName VARCHAR(100) NOT NULL,
+                    gameState TEXT DEFAULT NULL,
+                    FOREIGN KEY (whiteUsername) REFERENCES users(username) ON DELETE SET NULL,
+                    FOREIGN KEY (blackUsername) REFERENCES users(username) ON DELETE SET NULL
+                )
+            """;
+            stmt.executeUpdate(createGamesTable);
+
+            // ✅ auth_tokens 테이블 생성
+            String createAuthTokensTable = """
+                CREATE TABLE IF NOT EXISTS auth_tokens (
+                    authToken VARCHAR(255) PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL,
+                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+                )
+            """;
+            stmt.executeUpdate(createAuthTokensTable);
+
+            System.out.println("✅ All tables checked/created!");
+
         } catch (SQLException e) {
-            throw new DataAccessException("Database connection failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error initializing database: " + e.getMessage());
         }
     }
-
 }

@@ -6,6 +6,8 @@ import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.xml.crypto.Data;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTest {
@@ -14,10 +16,13 @@ public class UserServiceTest {
     private AuthDAO authDAO;
 
     @BeforeEach
-    void setUp() {
-        userDAO = new MemoryUserDAO();
+    void setUp() throws DataAccessException {
+        userDAO = new MySQLUserDAO();
         authDAO = new MemoryAuthDAO();
         userService = new UserService(userDAO, authDAO);
+
+        userDAO.clear();
+        authDAO.clear();
     }
 
     @Test
