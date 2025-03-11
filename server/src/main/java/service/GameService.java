@@ -57,9 +57,6 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
-        if (auth.username().equals(game.whiteUsername()) || auth.username().equals(game.blackUsername())) {
-            throw new DataAccessException("Error: already taken by the same user");
-        }
 
         // **WHITE 자리 체크**
         if ("WHITE".equalsIgnoreCase(playerColor)) {
