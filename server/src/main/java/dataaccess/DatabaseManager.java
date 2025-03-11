@@ -33,25 +33,25 @@ public class DatabaseManager {
         }
     }
 
-    /** ✅ DB 연결 가져오기 */
+    /** DB 연결 가져오기 */
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL + DB_NAME, DB_USER, DB_PASSWORD);
     }
 
-    /** ✅ DB 및 테이블 자동 생성 */
+    /** DB 및 테이블 자동 생성 */
     public static void initializeDatabase() {
         createDatabase(); // 1️⃣ 데이터베이스 생성
         createTables();   // 2️⃣ 테이블 생성
     }
 
-    /** ✅ 데이터베이스 생성 (없으면 생성) */
+    /** 데이터베이스 생성 (없으면 생성) */
     private static void createDatabase() {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              Statement stmt = conn.createStatement()) {
 
             String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS " + DB_NAME;
             stmt.executeUpdate(createDatabaseSQL);
-            System.out.println("✅ Database checked/created: " + DB_NAME);
+            System.out.println("Database checked/created: " + DB_NAME);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -59,12 +59,12 @@ public class DatabaseManager {
         }
     }
 
-    /** ✅ 테이블 생성 */
+    /** 테이블 생성 */
     private static void createTables() {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // ✅ users 테이블 생성
+            // users 테이블 생성
             String createUsersTable = """
                 CREATE TABLE IF NOT EXISTS users (
                     username VARCHAR(50) PRIMARY KEY,
@@ -74,7 +74,7 @@ public class DatabaseManager {
             """;
             stmt.executeUpdate(createUsersTable);
 
-            // ✅ games 테이블 생성
+            // games 테이블 생성
             String createGamesTable = """
                 CREATE TABLE IF NOT EXISTS games (
                     gameID INT AUTO_INCREMENT PRIMARY KEY,
@@ -88,7 +88,7 @@ public class DatabaseManager {
             """;
             stmt.executeUpdate(createGamesTable);
 
-            // ✅ auth_tokens 테이블 생성
+            // auth_tokens 테이블 생성
             String createAuthTokensTable = """
                 CREATE TABLE IF NOT EXISTS auth_tokens (
                     authToken VARCHAR(255) PRIMARY KEY,
@@ -98,7 +98,7 @@ public class DatabaseManager {
             """;
             stmt.executeUpdate(createAuthTokensTable);
 
-            System.out.println("✅ All tables checked/created!");
+            System.out.println("All tables checked/created!");
 
         } catch (SQLException e) {
             e.printStackTrace();
