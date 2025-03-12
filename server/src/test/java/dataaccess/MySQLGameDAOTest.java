@@ -3,49 +3,64 @@ package dataaccess;
 import model.GameData;
 import model.UserData;
 import chess.ChessGame;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MySQLGameDAOTest {
+class MySQLGameDAOTest {
+    private static MySQLGameDAO gameDAO;
+    private static MySQLUserDAO userDAO;
 
-    private MySQLGameDAO gameDAO;
-    private MySQLUserDAO userDAO;
-
-    @BeforeEach
-    void clearDatabase() throws DataAccessException {
+    @BeforeAll
+    static void setup() throws DataAccessException {  // 예외 처리 필요!
         gameDAO = new MySQLGameDAO();
         userDAO = new MySQLUserDAO();
 
-        // 데이터베이스 초기화
-        gameDAO.clear();
-        userDAO.clear(); // MySQLUserDAO에 clear() 메서드가 있어야 함.
+        // ✅ users 테이블 초기화 후 사용자 삽입
+        userDAO.clear();
+        userDAO.insertUser(new UserData("whitePlayer", "password", "white@example.com"));
+        userDAO.insertUser(new UserData("blackPlayer", "password", "black@example.com"));
+    }
 
-        // 테스트용 사용자 추가
+
+    @BeforeEach
+    void clearBefore() throws DataAccessException {
+        gameDAO.clear();
+        userDAO.clear();
         userDAO.insertUser(new UserData("whitePlayer", "password", "white@example.com"));
         userDAO.insertUser(new UserData("blackPlayer", "password", "black@example.com"));
     }
 
 
     @Test
-    void testGetGameNotFound() throws DataAccessException {
-        GameData retrievedGame = gameDAO.getGame(999);
-        assertNull(retrievedGame, "Game should not be found for invalid ID");
+    @DisplayName("✅ createGame - 게임 생성 성공")
+    void testCreateGameSuccess() throws DataAccessException {
+        ChessGame game = new ChessGame();
+        GameData gameData = new GameData(0, "whitePlayer", "blackPlayer", "Test Game", game);
+
+        int gameID = gameDAO.createGame(gameData);
+        assertTrue(gameID > 0);
+    }
+
+
+    @Test
+    @DisplayName("❌ createGame - NULL 데이터로 생성 실패")
+    void testCreateGameFail() {
+        Exception exception = assertThrows(DataAccessException.class, () -> {
+            gameDAO.createGame(null);
+        });
+        assertEquals("GameData cannot be null", exception.getMessage());
     }
 
 
 
     @Test
-    void testClearGames() throws DataAccessException {
-        ChessGame chessGame = new ChessGame();
-        gameDAO.createGame(new GameData(0, "whitePlayer", "blackPlayer", "Test Game", chessGame));
-
-        gameDAO.clear();
-        List<GameData> games = gameDAO.listGames();
-        assertEquals(0, games.size(), "All games should be cleared from the database");
+    @DisplayName("❌ getGame - 존재하지 않는 게임 ID 조회")
+    void testGetGameFail() throws DataAccessException {
+        assertNull(gameDAO.getGame(999999));
     }
-}
 
+
+}

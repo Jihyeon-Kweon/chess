@@ -11,6 +11,9 @@ public class MySQLGameDAO implements GameDAO {
 
     @Override
     public int createGame(GameData game) throws DataAccessException {
+        if (game == null){
+            throw new DataAccessException("GameData cannot be null");
+        }
         String sql = "INSERT INTO games (whiteUsername, blackUsername, gameName, gameState) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
