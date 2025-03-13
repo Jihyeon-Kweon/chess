@@ -22,7 +22,7 @@ class MySQLAuthDAOTest {
     }
 
     @Test
-    @DisplayName("✅ createAuth - 성공 케이스")
+    @DisplayName("createAuth - 성공 케이스")
     void testCreateAuthSuccess() throws DataAccessException {
         userDAO.insertUser(new UserData("testUser", "password123", "test@example.com")); // ✅ 먼저 유저 추가
 
@@ -35,13 +35,13 @@ class MySQLAuthDAOTest {
     }
 
     @Test
-    @DisplayName("❌ getAuth - 존재하지 않는 토큰 조회")
+    @DisplayName("getAuth - 존재하지 않는 토큰 조회")
     void testGetAuthFailNotFound() throws DataAccessException {
         assertNull(authDAO.getAuth("invalidToken"));
     }
 
     @Test
-    @DisplayName("✅ deleteAuth - 토큰 삭제 후 조회 실패")
+    @DisplayName("deleteAuth - 토큰 삭제 후 조회 실패")
     void testDeleteAuth() throws DataAccessException {
         userDAO.insertUser(new UserData("testUser", "password123", "test@example.com"));  // ✅ 유저 추가
 
@@ -53,7 +53,7 @@ class MySQLAuthDAOTest {
     }
 
     @Test
-    @DisplayName("✅ clear - 모든 토큰 삭제")
+    @DisplayName("clear - 모든 토큰 삭제")
     void testClearAuths() throws DataAccessException {
         userDAO.insertUser(new UserData("user1", "password123", "user1@example.com"));  // ✅ 유저 추가
         userDAO.insertUser(new UserData("user2", "password123", "user2@example.com"));
