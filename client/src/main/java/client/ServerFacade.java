@@ -47,10 +47,28 @@ public class ServerFacade {
         conn.connect();
     }
 
-    public String listGames(String authToken) throws IOException{
+    public String listGames(String authToken) throws IOException {
         String endpoint = "/game";
-        return sendGetRequest(endpoint, authToken);
+        URL url = new URL(serverUrl + endpoint);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Authorization", authToken); // 인증 토큰 추가
+
+        int statusCode = conn.getResponseCode();
+        try (InputStreamReader reader = new InputStreamReader(
+                statusCode >= 200 && statusCode < 300 ? conn.getInputStream() : conn.getErrorStream(),
+                "utf-8")) {
+            BufferedReader br = new BufferedReader(reader);
+            String response = br.readLine();
+
+            if (statusCode >= 200 && statusCode < 300) {
+                return response; // 정상 응답
+            } else {
+                throw new IOException("Server error: " + response); // 오류 응답
+            }
+        }
     }
+
 
     private String sendGetRequest(String endpoint, String authToken) throws IOException{
         URL url = new URL(serverUrl + endpoint);

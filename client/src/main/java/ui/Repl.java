@@ -78,15 +78,18 @@ public class Repl {
 
         try {
             String response = server.login(username, password);
-            if (response.contains("Error")) { // 서버에서 에러 메시지를 반환하면 로그인 실패 처리
-                System.out.println("Login failed: " + response);
+            if (response.contains("authToken")) {  // 응답에서 authToken 찾기
+                this.authToken = response.split("\"authToken\":\"")[1].split("\"")[0];
+                System.out.println("Login successful! AuthToken: " + authToken);
             } else {
-                System.out.println("Login successful: " + response);
+                System.out.println("Login failed: " + response);
             }
         } catch (Exception e) {
             System.out.println("Login failed: " + e.getMessage());
         }
     }
+
+
 
 
     private void handleLogout() {
