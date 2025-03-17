@@ -46,6 +46,9 @@ public class Repl {
             case "listGames":
                 handleListGames();
                 break;
+            case "logout":
+                handleLogout();
+                break;
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
         }
@@ -61,9 +64,9 @@ public class Repl {
 
         try {
             String response = server.register(username, password, email);
-            System.out.println("✅ Registration successful: " + response);
+            System.out.println("Registration successful: " + response);
         } catch (Exception e) {
-            System.out.println("❌ Registration failed: " + e.getMessage());
+            System.out.println("Registration failed: " + e.getMessage());
         }
     }
 
@@ -75,24 +78,41 @@ public class Repl {
 
         try {
             String response = server.login(username, password);
-            var jsonResponse = new Gson().fromJson(response, Map.class);
-            authToken = (String) jsonResponse.get("authToken"); // 토큰 저장
-            System.out.println("✅ Login successful: " + response);
+            if (response.contains("Error")) { // 서버에서 에러 메시지를 반환하면 로그인 실패 처리
+                System.out.println("Login failed: " + response);
+            } else {
+                System.out.println("Login successful: " + response);
+            }
+        } catch (Exception e) {
+            System.out.println("Login failed: " + e.getMessage());
+        }
+    }
+
+
+    private void handleLogout() {
+        if (authToken == null) {
+            System.out.println("You are not logged in.");
+            return;
+        }
+
+        try {
+            server.logout(authToken);
+            System.out.println("Successfully logged out.");
+            authToken = null; // 토큰 제거 (로그아웃 상태)
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-
     private void handleListGames() {
         if (authToken == null) {
-            System.out.println("❌ You must be logged in to list games.");
+            System.out.println("You must be logged in to list games.");
             return;
         }
 
         try {
             String response = server.listGames(authToken);
-            System.out.println("🎲 Available Games: " + response);
+            System.out.println("Available Games: " + response);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -105,6 +125,7 @@ public class Repl {
         System.out.println("  quit       - Exit the program.");
         System.out.println("  register   - Register a new account.");
         System.out.println("  login      - Login to your account.");
+        System.out.println("  logout     - Logout of your account.");
         System.out.println("  listGames  - List all available games (must be logged in).");
         System.out.println("\nMore commands will be added in the future.\n");
     }

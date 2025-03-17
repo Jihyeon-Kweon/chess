@@ -34,6 +34,19 @@ public class ServerFacade {
         return sendPostRequest(endpoint, requestBody);
     }
 
+    public void logout(String authToken) throws IOException{
+        sendDeleteRequest("/session", authToken);
+    }
+
+    private void sendDeleteRequest(String endpoint, String authToken) throws IOException {
+        URL url = new URL(serverUrl + endpoint);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("DELETE");
+        conn.setRequestProperty("Authorization", authToken);
+        conn.setDoOutput(true);
+        conn.connect();
+    }
+
     public String listGames(String authToken) throws IOException{
         String endpoint = "/game";
         return sendGetRequest(endpoint, authToken);
@@ -71,20 +84,24 @@ public class ServerFacade {
         conn.setDoOutput(true);
 
         try (OutputStream os = conn.getOutputStream()) {
-            byte[] input = gson.toJson(body).getBytes(StandardCharsets.UTF_8);
+            byte[] input = gson.toJson(body).getBytes("utf-8");
             os.write(input, 0, input.length);
         }
 
-        int responseCode = conn.getResponseCode();
-        InputStream inputStream = (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream();
+        int statusCode = conn.getResponseCode();
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                response.append(line);
+        try (InputStreamReader reader = new InputStreamReader(
+                statusCode >= 200 && statusCode < 300 ? conn.getInputStream() : conn.getErrorStream(),
+                "utf-8")) {
+            BufferedReader br = new BufferedReader(reader);
+            String response = br.readLine();
+
+            if (statusCode >= 200 && statusCode < 300) {
+                return response; // 정상 응답
+            } else {
+                throw new IOException("Server error: " + response); // 오류 응답
             }
-            return response.toString();
         }
     }
+
 }
