@@ -105,6 +105,7 @@ public class Repl {
         System.out.println("  quit       - Exit the program.");
         System.out.println("  register   - Register a new account.");
         System.out.println("  login      - Login to your account.");
+        System.out.println("  listGames  - List all available games (must be logged in).");
         System.out.println("\nMore commands will be added in the future.\n");
     }
 
