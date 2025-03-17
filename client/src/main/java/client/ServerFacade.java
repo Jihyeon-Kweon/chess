@@ -34,6 +34,35 @@ public class ServerFacade {
         return sendPostRequest(endpoint, requestBody);
     }
 
+    public String listGames(String authToken) throws IOException{
+        String endpoint = "/game";
+        return sendGetRequest(endpoint, authToken);
+    }
+
+    private String sendGetRequest(String endpoint, String authToken) throws IOException{
+        URL url = new URL(serverUrl + endpoint);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Authorization", authToken);
+
+        return readResponse(conn);
+    }
+
+    private String readResponse(HttpURLConnection conn) throws IOException {
+        int status = conn.getResponseCode();
+        InputStream responseStream = (status >= 200 && status < 300) ? conn.getInputStream() : conn.getErrorStream();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream, "utf-8"))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        }
+    }
+
+
     private String sendPostRequest(String endpoint, Map<String, String> body) throws IOException {
         URL url = new URL(serverUrl + endpoint);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();

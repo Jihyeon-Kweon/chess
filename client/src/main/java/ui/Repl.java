@@ -1,11 +1,15 @@
 package ui;
 
 import client.ServerFacade;
+import com.google.gson.Gson;
+
+import java.util.Map;
 import java.util.Scanner;
 
 public class Repl {
     private boolean running = true;
     private final ServerFacade server;
+    private String authToken = null;
 
     public Repl(String serverUrl) {
         this.server = new ServerFacade(serverUrl);
@@ -39,6 +43,9 @@ public class Repl {
             case "login":
                 handleLogin(scanner);
                 break;
+            case "listGames":
+                handleListGames();
+                break;
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
         }
@@ -68,11 +75,29 @@ public class Repl {
 
         try {
             String response = server.login(username, password);
+            var jsonResponse = new Gson().fromJson(response, Map.class);
+            authToken = (String) jsonResponse.get("authToken"); // 토큰 저장
             System.out.println("✅ Login successful: " + response);
         } catch (Exception e) {
-            System.out.println("❌ Login failed: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
+
+
+    private void handleListGames() {
+        if (authToken == null) {
+            System.out.println("❌ You must be logged in to list games.");
+            return;
+        }
+
+        try {
+            String response = server.listGames(authToken);
+            System.out.println("🎲 Available Games: " + response);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
 
     private void printHelp() {
         System.out.println("\nAvailable commands:");
