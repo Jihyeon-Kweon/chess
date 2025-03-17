@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 public class Repl {
     private boolean running = true;
-    private ServerFacade server;
+    private final ServerFacade server;
 
     public Repl(String serverUrl) {
         this.server = new ServerFacade(serverUrl);
@@ -54,9 +54,9 @@ public class Repl {
 
         try {
             String response = server.register(username, password, email);
-            System.out.println("Registration successful: " + response);
+            System.out.println("✅ Registration successful: " + response);
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Registration failed: " + e.getMessage());
         }
     }
 
@@ -68,9 +68,9 @@ public class Repl {
 
         try {
             String response = server.login(username, password);
-            System.out.println("Login successful: " + response);
+            System.out.println("✅ Login successful: " + response);
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("❌ Login failed: " + e.getMessage());
         }
     }
 
@@ -82,7 +82,6 @@ public class Repl {
         System.out.println("  login      - Login to your account.");
         System.out.println("\nMore commands will be added in the future.\n");
     }
-
 
     public static void main(String[] args) {
         String serverUrl = "http://localhost:8080"; // 서버 주소

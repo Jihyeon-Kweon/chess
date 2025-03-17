@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class ServerFacade {
@@ -15,23 +16,21 @@ public class ServerFacade {
     }
 
     public String register(String username, String password, String email) throws IOException {
-        String endpoint = "/register";
+        String endpoint = "/user"; // ✅ 회원가입 엔드포인트 수정
         Map<String, String> requestBody = Map.of(
                 "username", username,
                 "password", password,
                 "email", email
         );
-
         return sendPostRequest(endpoint, requestBody);
     }
 
     public String login(String username, String password) throws IOException {
-        String endpoint = "/login";
+        String endpoint = "/session"; // ✅ 로그인 엔드포인트 수정
         Map<String, String> requestBody = Map.of(
                 "username", username,
                 "password", password
         );
-
         return sendPostRequest(endpoint, requestBody);
     }
 
@@ -43,12 +42,20 @@ public class ServerFacade {
         conn.setDoOutput(true);
 
         try (OutputStream os = conn.getOutputStream()) {
-            byte[] input = gson.toJson(body).getBytes("utf-8");
+            byte[] input = gson.toJson(body).getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-            return br.readLine();
+        int responseCode = conn.getResponseCode();
+        InputStream inputStream = (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream();
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
         }
     }
 }
