@@ -8,8 +8,6 @@ public class ChessClient {
     private static final ServerFacade serverFacade = new ServerFacade("http://localhost:8080");
 
     public static void main(String[] args) {
-        System.out.println("[LOGGED_OUT] >>>");
-
         while (true) {
             System.out.print(isLoggedIn ? "[LOGGED_IN] >>> " : "[LOGGED_OUT] >>> ");
             String input = scanner.nextLine().trim();
@@ -34,9 +32,11 @@ public class ChessClient {
             case "help":
                 System.out.println("Available commands:");
                 System.out.println("help - Show available commands");
-                System.out.println("quit - Exit the program");
-                System.out.println("register <USERNAME> <PASSWORD> <EMAIL> - Register a new account");
-                System.out.println("login <USERNAME> <PASSWORD> - Log into an existing account");
+                System.out.println("logout - Log out of your account");
+                System.out.println("create <GAME_NAME> - Create a new game");
+                System.out.println("list - List all available games");
+                System.out.println("join <GAME_ID> <COLOR> - Join a game as white or black");
+                System.out.println("observe <GAME_ID> - Observe a game");
                 break;
 
             case "quit":
@@ -66,6 +66,27 @@ public class ChessClient {
                     isLoggedIn = true; // 로그인 성공 시 상태 변경
                 } else {
                     System.out.println("Error: Invalid username or password.");
+                }
+                break;
+
+            case "logout":
+                System.out.println("Logging out ...");
+                isLoggedIn = false;
+                break;
+
+            case "create":
+                if (tokens.length<2){
+                    System.out.println("Usage: create <GAME_NAME>");
+                    break;
+                }
+
+                // 게임 이름 합치기 (공백 포함)
+                String gameName = String.join(" ", tokens).substring(7);
+
+                if (serverFacade.createGame(gameName)) {
+                    System.out.println("Game '" + gameName + "' created successfully!");
+                } else {
+                    System.out.println("Error: Failed to create game.");
                 }
                 break;
 

@@ -76,6 +76,38 @@ public class ServerFacade {
         }
     }
 
+    /**
+     * Sends a request to create a new game on the server.
+     *
+     * @param gameName The name of the new game.
+     * @return true if the game was created successfully, false otherwise.
+     */
+    public boolean createGame(String gameName) {
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("gameName", gameName);
+
+        String body = new Gson().toJson(requestBody);
+        String response = sendRequest(serverUrl + "/game", "POST", body);
+
+        if (response == null) {
+            return false;
+        }
+
+        try {
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+
+            if (jsonResponse.containsKey("error")) {
+                System.out.println("Error: " + jsonResponse.get("error"));
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error parsing createGame response: " + e.getMessage());
+            return false;
+        }
+    }
+
 
     /**
      * Sends an HTTP request to the specified server endpoint.
