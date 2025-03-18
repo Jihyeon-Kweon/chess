@@ -30,8 +30,24 @@ public class ServerFacade {
         String body = new Gson().toJson(requestBody);
         String response = sendRequest(serverUrl + "/user", "POST", body);
 
-        return response != null; // If response is not null, registration was successful
+        if (response == null) {
+            return false;
+        }
+
+        try {
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+
+            if (jsonResponse.containsKey("error")) {
+                System.out.println("Error: " + jsonResponse.get("error"));
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false; // 예외 발생 시 등록 실패 처리
+        }
     }
+
 
     /**
      * Sends a login request to the server.
