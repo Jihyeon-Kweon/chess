@@ -2,15 +2,14 @@ package client;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import model.GameData;
 
 public class ServerFacade {
     private final String serverUrl;
+    private String authToken; // ✅ 로그인 후 자동 저장
 
     public ServerFacade(String serverUrl) {
         this.serverUrl = serverUrl;
@@ -18,11 +17,6 @@ public class ServerFacade {
 
     /**
      * Sends a registration request to the server.
-     *
-     * @param username The username for registration.
-     * @param password The password for registration.
-     * @param email    The email for registration.
-     * @return true if registration was successful, false otherwise.
      */
     public boolean registerUser(String username, String password, String email) {
         Map<String, String> requestBody = new HashMap<>();
@@ -31,33 +25,20 @@ public class ServerFacade {
         requestBody.put("email", email);
 
         String body = new Gson().toJson(requestBody);
-        String response = sendRequest(serverUrl + "/user", "POST", body);
+        String response = sendRequest(serverUrl + "/user", "POST", body, new HashMap<>());
 
-        if (response == null) {
-            return false;
-        }
+        if (response == null) return false;
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
-
-            if (jsonResponse.containsKey("error")) {
-                System.out.println("Error: " + jsonResponse.get("error"));
-                return false;
-            }
-
-            return true;
+            return !jsonResponse.containsKey("error");
         } catch (Exception e) {
-            return false; // 예외 발생 시 등록 실패 처리
+            return false;
         }
     }
 
-
     /**
      * Sends a login request to the server.
-     *
-     * @param username The username for login.
-     * @param password The password for login.
-     * @return true if login was successful, false otherwise.
      */
     public boolean loginUser(String username, String password) {
         Map<String, String> requestBody = new HashMap<>();
@@ -65,98 +46,119 @@ public class ServerFacade {
         requestBody.put("password", password);
 
         String body = new Gson().toJson(requestBody);
-        String response = sendRequest(serverUrl + "/session", "POST", body);
+        String response = sendRequest(serverUrl + "/session", "POST", body, new HashMap<>());
 
-        if (response == null) {
-            return false; // 로그인 실패
-        }
+        if (response == null) return false;
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
-            return jsonResponse.containsKey("authToken"); // 서버가 인증 토큰을 주면 성공
+            if (jsonResponse.containsKey("authToken")) {
+                this.authToken = (String) jsonResponse.get("authToken"); // ✅ 로그인 성공 시 저장
+                return true;
+            }
         } catch (Exception e) {
             return false;
         }
+        return false;
     }
 
     /**
-     * Sends a request to create a new game on the server.
-     *
-     * @param gameName The name of the new game.
-     * @return true if the game was created successfully, false otherwise.
+     * Sends a request to create a new game.
      */
     public boolean createGame(String gameName) {
+        if (authToken == null || authToken.isEmpty()) {
+            System.out.println("Error: User is not logged in.");
+            return false;
+        }
+
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("gameName", gameName);
 
-        String body = new Gson().toJson(requestBody);
-        String response = sendRequest(serverUrl + "/game", "POST", body);
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", authToken);
 
-        if (response == null) {
-            return false;
-        }
+        String body = new Gson().toJson(requestBody);
+        String response = sendRequest(serverUrl + "/game", "POST", body, headers);
+
+        if (response == null) return false;
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
-
-            if (jsonResponse.containsKey("error")) {
-                // Print the error message returned by the server
-                System.out.println("Error: " + jsonResponse.get("error"));
-                return false;
-            }
-
-            return true;
+            return !jsonResponse.containsKey("error");
         } catch (Exception e) {
-            System.out.println("Error parsing createGame response: " + e.getMessage());
             return false;
         }
     }
 
+    /**
+     * Lists all available games from the server.
+     */
+    public List<GameData> listGames() {
+        if (authToken == null || authToken.isEmpty()) {
+            System.out.println("Error: User is not logged in.");
+            return new ArrayList<>();
+        }
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", authToken);
+
+        String response = sendRequest(serverUrl + "/game", "GET", "", headers);
+        System.out.println("Server response: " + response);
+
+        if (response == null) return new ArrayList<>();
+
+        try {
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+
+            if (jsonResponse == null || !jsonResponse.containsKey("games")) {
+                System.out.println("Error: 'games' key missing in response.");
+                return new ArrayList<>();
+            }
+
+            return new Gson().fromJson(new Gson().toJson(jsonResponse.get("games")),
+                    new TypeToken<List<GameData>>() {}.getType());
+        } catch (Exception e) {
+            System.out.println("Error parsing game list response: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
 
     /**
      * Sends an HTTP request to the specified server endpoint.
-     *
-     * @param url    The full URL of the endpoint.
-     * @param method The HTTP method (e.g., GET, POST).
-     * @param body   The JSON body of the request (optional, can be empty for GET requests).
-     * @return The server response as a String, or null if an error occurs.
      */
-    private String sendRequest(String url, String method, String body) {
+    private String sendRequest(String url, String method, String body, Map<String, String> headers) {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(method);
             connection.setDoOutput(true);
             connection.addRequestProperty("Content-Type", "application/json");
 
-            // Write request body if present
+            // ✅ 추가적인 헤더 설정
+            if (headers != null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+
+            // 요청 본문이 있을 경우 전송
             if (!body.isEmpty()) {
                 try (OutputStream os = connection.getOutputStream()) {
                     os.write(body.getBytes());
                 }
             }
 
-            // Read response (either success or error)
+            // 응답 읽기
             InputStream responseStream = (connection.getResponseCode() < 300)
                     ? connection.getInputStream()
                     : connection.getErrorStream();
 
-            // Convert response stream to String
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream))) {
                 StringBuilder response = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
-
-                String responseStr = response.toString();
-
-                // Try parsing as JSON (if possible)
-                try {
-                    return new Gson().fromJson(responseStr, Map.class) != null ? responseStr : null;
-                } catch (JsonSyntaxException e) {
-                    // If JSON parsing fails, return as raw string
-                    return responseStr;
-                }
+                return response.toString();
             }
 
         } catch (Exception e) {
@@ -164,37 +166,4 @@ public class ServerFacade {
             return null;
         }
     }
-
-    public List<GameData> listGames() {
-        String response = sendRequest(serverUrl + "/game", "GET", "");
-
-        if (response == null) {
-            System.out.println("Error: Could not retrieve game list.");
-            return new ArrayList<>();  // 빈 리스트 반환
-        }
-
-        try {
-            // JSON 응답을 파싱하여 게임 목록 리스트로 변환
-            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
-            List<Map<String, Object>> gamesList = (List<Map<String, Object>>) jsonResponse.get("games");
-
-            List<GameData> gameDataList = new ArrayList<>();
-            for (Map<String, Object> game : gamesList) {
-                int gameID = ((Double) game.get("gameID")).intValue();
-                String whitePlayer = (String) game.get("whiteUsername");
-                String blackPlayer = (String) game.get("blackUsername");
-                String gameName = (String) game.get("gameName");
-
-                gameDataList.add(new GameData(gameID, whitePlayer, blackPlayer, gameName, null));
-            }
-
-            return gameDataList;
-
-        } catch (Exception e) {
-            System.out.println("Error parsing game list response: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-
 }

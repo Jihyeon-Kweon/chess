@@ -8,6 +8,7 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,17 +26,27 @@ public class GameHandler {
         return (Request req, Response res) -> {
             try {
                 String authToken = req.headers("authorization");
+                System.out.println("Auth Token received: " + authToken); // ✅ 디버깅용 출력
+
+                if (authToken == null || authToken.isEmpty()) {
+                    res.status(401);
+                    return gson.toJson(Map.of("message", "Error: unauthorized"));
+                }
+
                 List<GameData> games = gameService.listGames(authToken);
 
                 res.status(200);
                 Map<String, Object> response = new HashMap<>();
                 response.put("games", games);
+
                 return gson.toJson(response);
             } catch (DataAccessException e) {
                 return handleErrorResponse(res, e);
             }
         };
     }
+
+
 
     /** ✅ 게임 생성 */
     public Route createGame() {

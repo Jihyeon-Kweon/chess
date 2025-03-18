@@ -6,6 +6,7 @@ import dataaccess.DataAccessException;
 import model.AuthData;
 import model.GameData;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,8 +25,17 @@ public class GameService {
         if (auth == null) {
             throw new DataAccessException("Error: unauthorized");
         }
-        return gameDAO.listGames();
+
+        // ✅ games가 null이 아닐지 확인
+        List<GameData> games = gameDAO.listGames();
+        System.out.println("Retrieved games: " + games);
+
+        if (games == null) {
+            return new ArrayList<>(); // null 방지
+        }
+        return games;
     }
+
 
     public GameData createGame(String authToken, String gameName) throws DataAccessException {
         AuthData auth = authDAO.getAuth(authToken);
