@@ -1,5 +1,6 @@
 package client;
 
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class ChessClient {
@@ -32,11 +33,9 @@ public class ChessClient {
             case "help":
                 System.out.println("Available commands:");
                 System.out.println("help - Show available commands");
-                System.out.println("logout - Log out of your account");
-                System.out.println("create <GAME_NAME> - Create a new game");
-                System.out.println("list - List all available games");
-                System.out.println("join <GAME_ID> <COLOR> - Join a game as white or black");
-                System.out.println("observe <GAME_ID> - Observe a game");
+                System.out.println("quit - Exit the program");
+                System.out.println("register <USERNAME> <PASSWORD> <EMAIL> - Register a new account");
+                System.out.println("login <USERNAME> <PASSWORD> - Log into an existing account");
                 break;
 
             case "quit":
@@ -69,32 +68,12 @@ public class ChessClient {
                 }
                 break;
 
-            case "logout":
-                System.out.println("Logging out ...");
-                isLoggedIn = false;
-                break;
-
-            case "create":
-                if (tokens.length<2){
-                    System.out.println("Usage: create <GAME_NAME>");
-                    break;
-                }
-
-                // 게임 이름 합치기 (공백 포함)
-                String gameName = String.join(" ", tokens).substring(7);
-
-                if (serverFacade.createGame(gameName)) {
-                    System.out.println("Game '" + gameName + "' created successfully!");
-                } else {
-                    System.out.println("Error: Failed to create game.");
-                }
-                break;
-
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
                 break;
         }
     }
+
 
     private static void handlePostloginCommands(String command, String[] tokens) {
         switch (command) {
@@ -110,7 +89,23 @@ public class ChessClient {
 
             case "logout":
                 System.out.println("Logging out...");
-                isLoggedIn = false; // 로그아웃 시 상태 변경
+                isLoggedIn = false;
+                break;
+
+            case "create":
+                if (tokens.length < 2) {
+                    System.out.println("Usage: create <GAME_NAME>");
+                    break;
+                }
+
+                // Extracting the full game name (in case of spaces)
+                String gameName = String.join(" ", Arrays.copyOfRange(tokens, 1, tokens.length));
+
+                if (serverFacade.createGame(gameName)) {
+                    System.out.println("Game '" + gameName + "' created successfully!");
+                } else {
+                    System.out.println("Error: Failed to create game.");
+                }
                 break;
 
             default:
@@ -118,4 +113,5 @@ public class ChessClient {
                 break;
         }
     }
+
 }
