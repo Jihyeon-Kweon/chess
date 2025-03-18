@@ -48,8 +48,18 @@ public class ServerFacade {
         String body = new Gson().toJson(requestBody);
         String response = sendRequest(serverUrl + "/session", "POST", body);
 
-        return response != null; // If response is not null, login was successful
+        if (response == null) {
+            return false; // 로그인 실패
+        }
+
+        try {
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+            return jsonResponse.containsKey("authToken"); // 서버가 인증 토큰을 주면 성공
+        } catch (Exception e) {
+            return false;
+        }
     }
+
 
     /**
      * Sends an HTTP request to the specified server endpoint.
