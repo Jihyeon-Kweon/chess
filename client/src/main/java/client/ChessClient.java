@@ -3,87 +3,98 @@ package client;
 import java.util.Scanner;
 
 public class ChessClient {
-    private boolean loggedIn = false;
-    private final ServerFacade server;
-
-    public ChessClient(String serverUrl) {
-        this.server = new ServerFacade(serverUrl);
-    }
+    private static final Scanner scanner = new Scanner(System.in);
+    private static boolean isLoggedIn = false; // 로그인 상태 관리
+    private static final ServerFacade serverFacade = new ServerFacade("http://localhost:8080");
 
     public static void main(String[] args) {
-        String serverUrl = "http://localhost:8080"; // Change this if your server runs on a different port
-        if (args.length == 1) {
-            serverUrl = args[0];
-        }
-        new ChessClient(serverUrl).run();
-    }
-
-    public void run() {
-        Scanner scanner = new Scanner(System.in);
+        System.out.println("[LOGGED_OUT] >>>");
 
         while (true) {
-            System.out.print(loggedIn ? "[LOGGED_IN] >>> " : "[LOGGED_OUT] >>> "); // Show login state
+            System.out.print(isLoggedIn ? "[LOGGED_IN] >>> " : "[LOGGED_OUT] >>> ");
             String input = scanner.nextLine().trim();
-            processCommand(input);
+            String[] tokens = input.split("\\s+");
+
+            if (tokens.length == 0 || tokens[0].isEmpty()) {
+                continue;
+            }
+
+            String command = tokens[0].toLowerCase();
+
+            if (!isLoggedIn) {
+                handlePreloginCommands(command, tokens);
+            } else {
+                handlePostloginCommands(command, tokens);
+            }
         }
     }
 
-    private void processCommand(String input) {
-        String[] parts = input.split(" ");
-
-        if (parts.length == 0) return;
-
-        switch (parts[0].toLowerCase()) {
+    private static void handlePreloginCommands(String command, String[] tokens) {
+        switch (command) {
             case "help":
-                printHelp();
+                System.out.println("Available commands:");
+                System.out.println("help - Show available commands");
+                System.out.println("quit - Exit the program");
+                System.out.println("register <USERNAME> <PASSWORD> <EMAIL> - Register a new account");
+                System.out.println("login <USERNAME> <PASSWORD> - Log into an existing account");
                 break;
+
             case "quit":
                 System.out.println("Exiting program...");
                 System.exit(0);
                 break;
+
             case "register":
-                if (parts.length < 4) {
+                if (tokens.length != 4) {
                     System.out.println("Usage: register <USERNAME> <PASSWORD> <EMAIL>");
-                    return;
+                    break;
                 }
-                register(parts[1], parts[2], parts[3]);
+                if (serverFacade.registerUser(tokens[1], tokens[2], tokens[3])) {
+                    System.out.println("Successfully registered! Please log in.");
+                } else {
+                    System.out.println("Error: Registration failed. Try a different username.");
+                }
                 break;
+
             case "login":
-                if (parts.length < 3) {
+                if (tokens.length != 3) {
                     System.out.println("Usage: login <USERNAME> <PASSWORD>");
-                    return;
+                    break;
                 }
-                login(parts[1], parts[2]);
+                if (serverFacade.loginUser(tokens[1], tokens[2])) {
+                    System.out.println("Login successful!");
+                    isLoggedIn = true; // 로그인 성공 시 상태 변경
+                } else {
+                    System.out.println("Error: Invalid username or password.");
+                }
                 break;
+
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
+                break;
         }
     }
 
-    private void printHelp() {
-        System.out.println("Available commands:");
-        System.out.println("help - Show available commands");
-        System.out.println("quit - Exit the program");
-        System.out.println("register <USERNAME> <PASSWORD> <EMAIL> - Register a new account");
-        System.out.println("login <USERNAME> <PASSWORD> - Log into an existing account");
-    }
+    private static void handlePostloginCommands(String command, String[] tokens) {
+        switch (command) {
+            case "help":
+                System.out.println("Available commands:");
+                System.out.println("help - Show available commands");
+                System.out.println("logout - Log out of your account");
+                System.out.println("create <GAME_NAME> - Create a new game");
+                System.out.println("list - List all available games");
+                System.out.println("join <GAME_ID> <COLOR> - Join a game as white or black");
+                System.out.println("observe <GAME_ID> - Observe a game");
+                break;
 
-    private void register(String username, String password, String email) {
-        boolean success = server.registerUser(username, password, email);
-        if (success) {
-            System.out.println("Successfully registered! Please log in.");
-        } else {
-            System.out.println("Error: Registration failed. Try a different username.");
-        }
-    }
+            case "logout":
+                System.out.println("Logging out...");
+                isLoggedIn = false; // 로그아웃 시 상태 변경
+                break;
 
-    private void login(String username, String password) {
-        boolean success = server.loginUser(username, password);
-        if (success) {
-            loggedIn = true;
-            System.out.println("Login successful!");
-        } else {
-            System.out.println("Error: Invalid username or password.");
+            default:
+                System.out.println("Unknown command. Type 'help' for available commands.");
+                break;
         }
     }
 }
