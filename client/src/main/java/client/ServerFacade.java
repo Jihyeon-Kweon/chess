@@ -2,9 +2,12 @@ package client;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.google.gson.*;
+import model.GameData;
 
 public class ServerFacade {
     private final String serverUrl;
@@ -97,6 +100,7 @@ public class ServerFacade {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
 
             if (jsonResponse.containsKey("error")) {
+                // Print the error message returned by the server
                 System.out.println("Error: " + jsonResponse.get("error"));
                 return false;
             }
@@ -136,12 +140,23 @@ public class ServerFacade {
                     ? connection.getInputStream()
                     : connection.getErrorStream();
 
-            try (Reader reader = new InputStreamReader(responseStream)) {
-                // Parse JSON response into a Map
-                Map<String, Object> jsonResponse = new Gson().fromJson(reader, Map.class);
+            // Convert response stream to String
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
 
-                // Extract meaningful message or return entire JSON as a string
-                return jsonResponse.containsKey("message") ? (String) jsonResponse.get("message") : new Gson().toJson(jsonResponse);
+                String responseStr = response.toString();
+
+                // Try parsing as JSON (if possible)
+                try {
+                    return new Gson().fromJson(responseStr, Map.class) != null ? responseStr : null;
+                } catch (JsonSyntaxException e) {
+                    // If JSON parsing fails, return as raw string
+                    return responseStr;
+                }
             }
 
         } catch (Exception e) {
@@ -149,5 +164,37 @@ public class ServerFacade {
             return null;
         }
     }
+
+    public List<GameData> listGames() {
+        String response = sendRequest(serverUrl + "/game", "GET", "");
+
+        if (response == null) {
+            System.out.println("Error: Could not retrieve game list.");
+            return new ArrayList<>();  // 빈 리스트 반환
+        }
+
+        try {
+            // JSON 응답을 파싱하여 게임 목록 리스트로 변환
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+            List<Map<String, Object>> gamesList = (List<Map<String, Object>>) jsonResponse.get("games");
+
+            List<GameData> gameDataList = new ArrayList<>();
+            for (Map<String, Object> game : gamesList) {
+                int gameID = ((Double) game.get("gameID")).intValue();
+                String whitePlayer = (String) game.get("whiteUsername");
+                String blackPlayer = (String) game.get("blackUsername");
+                String gameName = (String) game.get("gameName");
+
+                gameDataList.add(new GameData(gameID, whitePlayer, blackPlayer, gameName, null));
+            }
+
+            return gameDataList;
+
+        } catch (Exception e) {
+            System.out.println("Error parsing game list response: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
 
 }

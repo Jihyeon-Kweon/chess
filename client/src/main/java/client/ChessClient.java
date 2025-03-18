@@ -1,6 +1,9 @@
 package client;
 
+import model.GameData;
+
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class ChessClient {
@@ -68,6 +71,8 @@ public class ChessClient {
                 }
                 break;
 
+
+
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
                 break;
@@ -105,6 +110,23 @@ public class ChessClient {
                     System.out.println("Game '" + gameName + "' created successfully!");
                 } else {
                     System.out.println("Error: Failed to create game.");
+                }
+                break;
+
+            case "list":
+                List<GameData> games = serverFacade.listGames();
+
+                if (games.isEmpty()) {
+                    System.out.println("No games available.");
+                } else {
+                    System.out.println("Available games:");
+                    int index = 1;
+                    for (GameData game : games) {
+                        System.out.printf("%d. %s (White: %s, Black: %s)%n",
+                                index++, game.gameName(),
+                                game.whiteUsername() == null ? "Open" : game.whiteUsername(),
+                                game.blackUsername() == null ? "Open" : game.blackUsername());
+                    }
                 }
                 break;
 

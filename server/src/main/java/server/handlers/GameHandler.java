@@ -20,6 +20,7 @@ public class GameHandler {
         this.gameService = gameService;
     }
 
+    /** ✅ 게임 리스트 반환 */
     public Route listGames() {
         return (Request req, Response res) -> {
             try {
@@ -36,30 +37,50 @@ public class GameHandler {
         };
     }
 
+    /** ✅ 게임 생성 */
     public Route createGame() {
         return (Request req, Response res) -> {
             try {
                 String authToken = req.headers("authorization");
                 GameRequest requestData = gson.fromJson(req.body(), GameRequest.class);
+
+                // 요청 데이터가 올바른지 확인
+                if (requestData == null || requestData.gameName == null || requestData.gameName.trim().isEmpty()) {
+                    res.status(400);
+                    return gson.toJson(Map.of("message", "Error: game name is required"));
+                }
+
                 GameData game = gameService.createGame(authToken, requestData.gameName);
 
                 res.status(200);
-                return gson.toJson(game);
+                return gson.toJson(Map.of(
+                        "message", "Game created successfully",
+                        "gameID", game.gameID(),
+                        "gameName", game.gameName()
+                ));
             } catch (DataAccessException e) {
                 return handleErrorResponse(res, e);
             }
         };
     }
 
+    /** ✅ 게임 참가 */
     public Route joinGame() {
         return (Request req, Response res) -> {
             try {
                 String authToken = req.headers("authorization");
                 JoinGameRequest requestData = gson.fromJson(req.body(), JoinGameRequest.class);
+
+                // 요청 데이터 유효성 검사
+                if (requestData == null || requestData.gameID() <= 0 || requestData.playerColor() == null) {
+                    res.status(400);
+                    return gson.toJson(Map.of("message", "Error: invalid request data"));
+                }
+
                 gameService.joinGame(authToken, requestData.gameID(), requestData.playerColor());
 
                 res.status(200);
-                return gson.toJson(new ResponseObject());
+                return gson.toJson(Map.of("message", "Joined game successfully"));
             } catch (DataAccessException e) {
                 return handleErrorResponse(res, e);
             }
@@ -71,16 +92,20 @@ public class GameHandler {
         int statusCode = switch (e.getMessage()) {
             case "Error: unauthorized" -> 401;
             case "Error: already taken" -> 403;
+            case "Error: game name already exists" -> 409;  // **중복 게임 이름은 409 Conflict 응답**
             default -> 400;
         };
         res.status(statusCode);
 
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("message", "Error: " + e.getMessage());
-        return gson.toJson(errorResponse);
+        return gson.toJson(Map.of("message", e.getMessage()));
     }
 
-    // JoinGame 요청 객체
+    /** ✅ 게임 생성 요청 객체 */
+    private static class GameRequest {
+        private String gameName;
+    }
+
+    /** ✅ 게임 참가 요청 객체 */
     private static class JoinGameRequest {
         private String playerColor;
         private int gameID;
@@ -93,12 +118,4 @@ public class GameHandler {
             return gameID;
         }
     }
-
-    // CreateGame 요청 객체
-    private static class GameRequest {
-        private String gameName;
-    }
-
-    // ✅ 빈 JSON 응답을 위한 객체
-    private static class ResponseObject {}
 }
