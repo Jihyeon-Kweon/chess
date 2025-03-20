@@ -9,7 +9,7 @@ import model.GameData;
 
 public class ServerFacade {
     private final String serverUrl;
-    private String authToken; // ✅ 로그인 후 자동 저장
+    private String authToken;
 
     public ServerFacade(String serverUrl) {
         this.serverUrl = serverUrl;
@@ -53,7 +53,7 @@ public class ServerFacade {
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
             if (jsonResponse.containsKey("authToken")) {
-                this.authToken = (String) jsonResponse.get("authToken"); // ✅ 로그인 성공 시 저장
+                this.authToken = (String) jsonResponse.get("authToken");
                 return true;
             }
         } catch (Exception e) {
@@ -171,7 +171,6 @@ public class ServerFacade {
             connection.setDoOutput(true);
             connection.addRequestProperty("Content-Type", "application/json");
 
-            // ✅ 추가적인 헤더 설정
             if (headers != null) {
                 for (Map.Entry<String, String> entry : headers.entrySet()) {
                     connection.setRequestProperty(entry.getKey(), entry.getValue());
