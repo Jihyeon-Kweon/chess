@@ -130,6 +130,37 @@ public class ChessClient {
                 }
                 break;
 
+            case "join":
+                if (tokens.length != 3) {
+                    System.out.println("Usage: join <GAME_ID> <COLOR>");
+                    break;
+                }
+
+                try {
+                    int gameIndex = Integer.parseInt(tokens[1]); // 사용자 입력 인덱스 변환
+                    String playerColor = tokens[2].toUpperCase();
+
+                    // 게임 목록 가져오기
+                    List<GameData> joinGameList = serverFacade.listGames();
+                    if (gameIndex < 1 || gameIndex > joinGameList.size()) {
+                        System.out.println("Error: Invalid game ID.");
+                        break;
+                    }
+
+                    int gameID = joinGameList.get(gameIndex - 1).gameID(); // 올바른 gameID 가져오기
+
+                    // 서버에 게임 참가 요청 보내기
+                    if (serverFacade.joinGame(gameID, playerColor)) {
+                        System.out.println("Joined game successfully!");
+                    } else {
+                        System.out.println("Failed to join game.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Error: GAME_ID must be a number.");
+                }
+                break;
+
+
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
                 break;

@@ -80,7 +80,10 @@ public class GameHandler {
         return (Request req, Response res) -> {
             try {
                 String authToken = req.headers("authorization");
+                System.out.println("Auth Token received: " + authToken);
+
                 JoinGameRequest requestData = gson.fromJson(req.body(), JoinGameRequest.class);
+                System.out.println("Received request: gameID=" + requestData.gameID() + ", playerColor=" + requestData.playerColor());
 
                 // 요청 데이터 유효성 검사
                 if (requestData == null || requestData.gameID() <= 0 || requestData.playerColor() == null) {
