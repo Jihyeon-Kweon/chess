@@ -138,4 +138,47 @@ public class ServerFacadeTests {
         // Then
         Assertions.assertFalse(result, "Logout without login should fail");
     }
+
+//    @Test
+//    public void testObserveGamePositive() {
+//        // Given
+//        facade.registerUser("observer", "pass", "obs@example.com");
+//        facade.loginUser("observer", "pass");
+//        facade.createGame("ObserveTest");
+//
+//        List<GameData> games = facade.listGames();
+//        int gameID = games.get(0).gameID();
+//
+//        // When
+//        boolean result = facade.observeGame(gameID);
+//
+//        // Then
+//        assertTrue(result, "Observer should be able to view the game successfully");
+//    }
+
+    @Test
+    public void testObserveGameNegativeInvalidID() {
+        // Given
+        facade.registerUser("observer2", "pass", "obs2@example.com");
+        facade.loginUser("observer2", "pass");
+
+        // When
+        boolean result = facade.observeGame(99999); // 존재하지 않는 ID
+
+        // Then
+        assertFalse(result, "Observe should fail for an invalid game ID");
+    }
+
+    @Test
+    public void testObserveGameNegativeNotLoggedIn() {
+        // Given
+        ServerFacade freshFacade = new ServerFacade("http://localhost:" + port);
+
+        // When
+        boolean result = freshFacade.observeGame(1); // 로그인 안 된 상태
+
+        // Then
+        assertFalse(result, "Observe should fail when user is not logged in");
+    }
+
 }

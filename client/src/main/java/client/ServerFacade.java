@@ -243,4 +243,40 @@ public class ServerFacade {
         return true;
     }
 
+    public boolean observeGame(int gameID) {
+        if (authToken == null || authToken.isEmpty()) {
+            System.out.println("Error: User is not logged in.");
+            return false;
+        }
+
+        String url = serverUrl + "/game/" + gameID;
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", authToken);
+
+        String response = sendRequest(url, "GET", "", headers);
+        System.out.println("ObserveGame Raw Response: " + response); // 🔍 추가된 디버그 로그
+
+        if (response == null) {
+            return false;
+        }
+
+        try {
+            // 응답이 JSON 객체 형식인지 먼저 검사
+            if (response.trim().startsWith("{")) {
+                Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+                return jsonResponse.containsKey("game");
+            } else {
+                // 단순 문자열 응답이라면 에러 메시지로 출력
+                System.out.println("Error: " + response);
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("Error parsing observeGame response: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+
 }

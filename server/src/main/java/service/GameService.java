@@ -87,4 +87,19 @@ public class GameService {
         gameDAO.updateGame(game);
     }
 
+    public GameData observeGame(String authToken, int gameID) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        GameData game = gameDAO.getGame(gameID);
+        if (game == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        return game;
+    }
+
+
 }

@@ -101,6 +101,26 @@ public class GameHandler {
         };
     }
 
+    /** ✅ 관전자 기능: 게임 관전하기 */
+    public Route observeGame() {
+        return (Request req, Response res) -> {
+            try {
+                String authToken = req.headers("authorization");
+                int gameID = Integer.parseInt(req.params(":gameID")); // /game/:gameID
+
+                GameData game = gameService.observeGame(authToken, gameID);
+                res.status(200);
+                return gson.toJson(game);
+            } catch (DataAccessException e) {
+                return handleErrorResponse(res, e);
+            } catch (NumberFormatException e) {
+                res.status(400);
+                return gson.toJson(Map.of("message", "Error: invalid gameID"));
+            }
+        };
+    }
+
+
     /** ✅ 중복된 오류 응답 처리를 위한 메서드 */
     private String handleErrorResponse(Response res, DataAccessException e) {
         int statusCode = switch (e.getMessage()) {
