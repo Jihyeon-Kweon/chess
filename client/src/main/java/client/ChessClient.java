@@ -5,6 +5,8 @@ import model.GameData;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import static ui.EscapeSequences.*;
+
 
 public class ChessClient {
     private static final Scanner SCANNER = new Scanner(System.in);
@@ -164,11 +166,37 @@ public class ChessClient {
 
                     if (SERVER_FACADE.joinGame(gameID, playerColor)) {
                         System.out.println("Joined game successfully!");
-                        // ✅ 보드 출력 추가
-                        drawBoard(playerColor);
+
+                        // ✅ drawBoard 메서드 호출
+                        ChessClientUtils.drawBoard(playerColor);
                     } else {
                         System.out.println("Failed to join game.");
                     }
+                } catch (NumberFormatException e) {
+                    System.out.println("Error: GAME_ID must be a number.");
+                }
+                break;
+
+
+            case "observe":
+                if (tokens.length != 2) {
+                    System.out.println("Usage: observe <GAME_ID>");
+                    break;
+                }
+
+                try {
+                    int gameIndex = Integer.parseInt(tokens[1]);
+                    List<GameData> gamesList = SERVER_FACADE.listGames();
+                    if (gameIndex < 1 || gameIndex > gamesList.size()) {
+                        System.out.println("Error: Invalid game ID.");
+                        break;
+                    }
+
+                    int gameID = gamesList.get(gameIndex - 1).gameID();
+
+                    // ✅ 관전 기능 실행
+                    ChessClientUtils.observeGame(gameID);
+
                 } catch (NumberFormatException e) {
                     System.out.println("Error: GAME_ID must be a number.");
                 }
@@ -182,52 +210,86 @@ public class ChessClient {
         }
     }
 
-    public static void drawBoard(String playerColor) {
-        String[][] board = {
-                {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"},
-                {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"},
-                {" ", " ", " ", " ", " ", " ", " ", " "},
-                {" ", " ", " ", " ", " ", " ", " ", " "},
-                {" ", " ", " ", " ", " ", " ", " ", " "},
-                {" ", " ", " ", " ", " ", " ", " ", " "},
-                {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"},
-                {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"},
-        };
+    public class ChessClientUtils {
+        public static void drawBoard(String perspective) {
+            String[][] board = getInitialBoard();
 
-        final String RESET = "\u001B[0m";
-        final String RED = "\u001B[31m";
-        final String BLUE = "\u001B[34m";
+            boolean isWhite = perspective.equalsIgnoreCase("WHITE");
 
-        int[] rowIndices = playerColor.equalsIgnoreCase("WHITE") ?
-                new int[]{7,6,5,4,3,2,1,0} : new int[]{0,1,2,3,4,5,6,7};
+            int[] rows = isWhite ? new int[]{8,7,6,5,4,3,2,1} : new int[]{1,2,3,4,5,6,7,8};
+            char[] cols = isWhite ? new char[]{'a','b','c','d','e','f','g','h'} : new char[]{'h','g','f','e','d','c','b','a'};
 
-        int[] colIndices = playerColor.equalsIgnoreCase("WHITE") ?
-                new int[]{0,1,2,3,4,5,6,7} : new int[]{7,6,5,4,3,2,1,0};
-
-        System.out.println();
-
-        for (int row : rowIndices) {
-            System.out.print((8 - row) + "  ");
-            for (int col : colIndices) {
-                String piece = board[row][col];
-                if ("♟♜♞♝♛♚".contains(piece)) {
-                    System.out.print(RED + piece + RESET + "  ");
-                } else if ("♙♖♘♗♕♔".contains(piece)) {
-                    System.out.print(BLUE + piece + RESET + "  ");
-                } else {
-                    System.out.print(piece + "  ");
-                }
+            // Top column labels
+            System.out.print("   ");
+            for (char col : cols) {
+                System.out.print(" " + col + " ");
             }
-            System.out.println((8 - row));
+            System.out.println();
+
+            for (int row : rows) {
+                System.out.print(" " + row + " ");
+                for (int i = 0; i < cols.length; i++) {
+                    int actualCol = isWhite ? i : (cols.length - 1 - i);
+                    boolean isLight = (row + actualCol) % 2 == 0;
+                    String bgColor = isLight ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
+
+                    String piece = board[8 - row][actualCol];
+                    String coloredPiece = colorizePiece(piece);
+
+                    System.out.print(bgColor + coloredPiece + RESET_BG_COLOR + RESET_TEXT_COLOR);
+                }
+                System.out.println(" " + row);
+            }
+
+            // Bottom column labels
+            System.out.print("   ");
+            for (char col : cols) {
+                System.out.print(" " + col + " ");
+            }
+            System.out.println();
         }
 
-        System.out.print("   ");
-        for (int col : colIndices) {
-            char file = (char) ('a' + col);
-            System.out.print(" " + file + " ");
+        private static String[][] getInitialBoard() {
+            return new String[][]{
+                    {"r", "n", "b", "q", "k", "b", "n", "r"},
+                    {"p", "p", "p", "p", "p", "p", "p", "p"},
+                    {" ", " ", " ", " ", " ", " ", " ", " "},
+                    {" ", " ", " ", " ", " ", " ", " ", " "},
+                    {" ", " ", " ", " ", " ", " ", " ", " "},
+                    {" ", " ", " ", " ", " ", " ", " ", " "},
+                    {"P", "P", "P", "P", "P", "P", "P", "P"},
+                    {"R", "N", "B", "Q", "K", "B", "N", "R"}
+            };
         }
-        System.out.println("\n");
+
+        private static String colorizePiece(String piece) {
+            String result;
+            switch (piece) {
+                case "K": result = SET_TEXT_COLOR_RED + " K "; break;
+                case "Q": result = SET_TEXT_COLOR_RED + " Q "; break;
+                case "R": result = SET_TEXT_COLOR_RED + " R "; break;
+                case "B": result = SET_TEXT_COLOR_RED + " B "; break;
+                case "N": result = SET_TEXT_COLOR_RED + " N "; break;
+                case "P": result = SET_TEXT_COLOR_RED + " P "; break;
+
+                case "k": result = SET_TEXT_COLOR_BLUE + " K "; break;
+                case "q": result = SET_TEXT_COLOR_BLUE + " Q "; break;
+                case "r": result = SET_TEXT_COLOR_BLUE + " R "; break;
+                case "b": result = SET_TEXT_COLOR_BLUE + " B "; break;
+                case "n": result = SET_TEXT_COLOR_BLUE + " N "; break;
+                case "p": result = SET_TEXT_COLOR_BLUE + " P "; break;
+
+                default: result = "   "; break;
+            }
+            return result;
+        }
+
+        public static void observeGame(int gameID){
+            System.out.println("Observing game " + gameID + "...");
+            drawBoard("WHITE");
+        }
     }
+
 
 
 }
