@@ -51,12 +51,26 @@ public class ChessClient {
                     System.out.println("Usage: register <USERNAME> <PASSWORD> <EMAIL>");
                     break;
                 }
-                if (SERVER_FACADE.registerUser(tokens[1], tokens[2], tokens[3])) {
-                    System.out.println("Successfully registered! Please log in.");
+
+                String username = tokens[1];
+                String password = tokens[2];
+                String email = tokens[3];
+
+                if (SERVER_FACADE.registerUser(username, password, email)) {
+                    System.out.println("Successfully registered!");
+
+                    // 자동 로그인 시도
+                    if (SERVER_FACADE.loginUser(username, password)) {
+                        System.out.println("Logged in as " + username);
+                        isLoggedIn = true;
+                    } else {
+                        System.out.println("But automatic login failed. Try logging in manually.");
+                    }
                 } else {
                     System.out.println("Error: Registration failed. Try a different username.");
                 }
                 break;
+
 
             case "login":
                 if (tokens.length != 3) {
