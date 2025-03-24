@@ -34,7 +34,7 @@ public class ServerFacadeTests {
 
     // ✅ Register
     @Test
-    public void testRegisterUser_Positive() {
+    public void testRegisterUserPositive() {
         boolean result = facade.registerUser("user1", "pass", "user1@email.com");
         assertTrue(result);
     }
@@ -48,21 +48,21 @@ public class ServerFacadeTests {
 
     // ✅ Login
     @Test
-    public void testLoginUser_Positive() {
+    public void testLoginUserPositive() {
         facade.registerUser("user2", "pass2", "user2@email.com");
         boolean result = facade.loginUser("user2", "pass2");
         assertTrue(result);
     }
 
     @Test
-    public void testLoginUser_Negative() {
+    public void testLoginUserNegative() {
         boolean result = facade.loginUser("notExist", "wrongpass");
         assertFalse(result);
     }
 
     // ✅ Create Game
     @Test
-    public void testCreateGame_Positive() {
+    public void testCreateGamePositive() {
         facade.registerUser("creator", "pass", "c@email.com");
         facade.loginUser("creator", "pass");
         boolean result = facade.createGame("My Game");
@@ -70,7 +70,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testCreateGame_Negative_NotLoggedIn() {
+    public void testCreateGameNegativeNotLoggedIn() {
         ServerFacade freshFacade = new ServerFacade("http://localhost:" + port);
         boolean result = freshFacade.createGame("NoAuth Game");
         assertFalse(result);
@@ -78,7 +78,7 @@ public class ServerFacadeTests {
 
     // ✅ List Games
     @Test
-    public void testListGames_Positive() {
+    public void testListGamesPositive() {
         facade.registerUser("lister", "pass", "l@email.com");
         facade.loginUser("lister", "pass");
         facade.createGame("Game A");
@@ -87,7 +87,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testListGames_Negative_NotLoggedIn() {
+    public void testListGamesNegativeNotLoggedIn() {
         ServerFacade freshFacade = new ServerFacade("http://localhost:" + port);
         List<GameData> games = freshFacade.listGames();
         assertTrue(games.isEmpty());
@@ -95,7 +95,7 @@ public class ServerFacadeTests {
 
     // ✅ Join Game
     @Test
-    public void testJoinGame_Positive() {
+    public void testJoinGamePositive() {
         facade.registerUser("joiner", "pass", "j@email.com");
         facade.loginUser("joiner", "pass");
         facade.createGame("JoinMe");
@@ -106,10 +106,36 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testJoinGame_Negative_InvalidGameID() {
+    public void testJoinGameNegativeInvalidGameID() {
         facade.registerUser("joiner2", "pass", "j2@email.com");
         facade.loginUser("joiner2", "pass");
         boolean result = facade.joinGame(99999, "black"); // 존재하지 않는 게임 ID
         assertFalse(result);
+    }
+
+    @Test
+    public void logoutPositive() {
+        // Given a user who is registered and logged in
+        facade.registerUser("logoutUser", "pass123", "logout@example.com");
+        boolean loggedIn = facade.loginUser("logoutUser", "pass123");
+        Assertions.assertTrue(loggedIn, "Login should succeed before logout");
+
+        // When logging out
+        boolean result = facade.logout();
+
+        // Then
+        Assertions.assertTrue(result, "Logout should succeed");
+    }
+
+    @Test
+    public void logoutNegativeNotLoggedIn() {
+        // Given a fresh ServerFacade without login
+        ServerFacade freshFacade = new ServerFacade("http://localhost:" + port);
+
+        // When calling logout without login
+        boolean result = freshFacade.logout();
+
+        // Then
+        Assertions.assertFalse(result, "Logout without login should fail");
     }
 }

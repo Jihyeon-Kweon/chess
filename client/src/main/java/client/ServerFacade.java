@@ -27,7 +27,9 @@ public class ServerFacade {
         String body = new Gson().toJson(requestBody);
         String response = sendRequest(serverUrl + "/user", "POST", body, new HashMap<>());
 
-        if (response == null) return false;
+        if (response == null) {
+            return false;
+        }
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
@@ -48,7 +50,9 @@ public class ServerFacade {
         String body = new Gson().toJson(requestBody);
         String response = sendRequest(serverUrl + "/session", "POST", body, new HashMap<>());
 
-        if (response == null) return false;
+        if (response == null) {
+            return false;
+        }
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
@@ -80,7 +84,9 @@ public class ServerFacade {
         String body = new Gson().toJson(requestBody);
         String response = sendRequest(serverUrl + "/game", "POST", body, headers);
 
-        if (response == null) return false;
+        if (response == null) {
+            return false;
+        }
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
@@ -105,7 +111,9 @@ public class ServerFacade {
         String response = sendRequest(serverUrl + "/game", "GET", "", headers);
         System.out.println("Server response: " + response);
 
-        if (response == null) return new ArrayList<>();
+        if (response == null) {
+            return new ArrayList<>();
+        }
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
@@ -203,4 +211,25 @@ public class ServerFacade {
             return null;
         }
     }
+
+    public boolean logout() {
+        if (authToken == null || authToken.isEmpty()) {
+            System.out.println("Error: User is not logged in.");
+            return false;
+        }
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", authToken);
+
+        String response = sendRequest(serverUrl + "/session", "DELETE", "", headers);
+
+        if (response == null) {
+            return false;
+        }
+
+        // 로그아웃 성공 시 authToken 제거
+        this.authToken = null;
+        return true;
+    }
+
 }

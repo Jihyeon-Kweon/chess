@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Scanner;
 
 public class ChessClient {
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner SCANNER = new Scanner(System.in);
     private static boolean isLoggedIn = false; // 로그인 상태 관리
-    private static final ServerFacade serverFacade = new ServerFacade("http://localhost:8080");
+    private static final ServerFacade SERVER_FACADE = new ServerFacade("http://localhost:8080");
 
     public static void main(String[] args) {
         while (true) {
             System.out.print(isLoggedIn ? "[LOGGED_IN] >>> " : "[LOGGED_OUT] >>> ");
-            String input = scanner.nextLine().trim();
+            String input = SCANNER.nextLine().trim();
             String[] tokens = input.split("\\s+");
 
             if (tokens.length == 0 || tokens[0].isEmpty()) {
@@ -51,7 +51,7 @@ public class ChessClient {
                     System.out.println("Usage: register <USERNAME> <PASSWORD> <EMAIL>");
                     break;
                 }
-                if (serverFacade.registerUser(tokens[1], tokens[2], tokens[3])) {
+                if (SERVER_FACADE.registerUser(tokens[1], tokens[2], tokens[3])) {
                     System.out.println("Successfully registered! Please log in.");
                 } else {
                     System.out.println("Error: Registration failed. Try a different username.");
@@ -63,7 +63,7 @@ public class ChessClient {
                     System.out.println("Usage: login <USERNAME> <PASSWORD>");
                     break;
                 }
-                if (serverFacade.loginUser(tokens[1], tokens[2])) {
+                if (SERVER_FACADE.loginUser(tokens[1], tokens[2])) {
                     System.out.println("Login successful!");
                     isLoggedIn = true; // 로그인 성공 시 상태 변경
                 } else {
@@ -106,7 +106,7 @@ public class ChessClient {
                 // Extracting the full game name (in case of spaces)
                 String gameName = String.join(" ", Arrays.copyOfRange(tokens, 1, tokens.length));
 
-                if (serverFacade.createGame(gameName)) {
+                if (SERVER_FACADE.createGame(gameName)) {
                     System.out.println("Game '" + gameName + "' created successfully!");
                 } else {
                     System.out.println("Error: Failed to create game.");
@@ -114,7 +114,7 @@ public class ChessClient {
                 break;
 
             case "list":
-                List<GameData> games = serverFacade.listGames();
+                List<GameData> games = SERVER_FACADE.listGames();
 
                 if (games.isEmpty()) {
                     System.out.println("No games available.");
@@ -141,7 +141,7 @@ public class ChessClient {
                     String playerColor = tokens[2].toUpperCase();
 
                     // 게임 목록 가져오기
-                    List<GameData> joinGameList = serverFacade.listGames();
+                    List<GameData> joinGameList = SERVER_FACADE.listGames();
                     if (gameIndex < 1 || gameIndex > joinGameList.size()) {
                         System.out.println("Error: Invalid game ID.");
                         break;
@@ -150,7 +150,7 @@ public class ChessClient {
                     int gameID = joinGameList.get(gameIndex - 1).gameID(); // 올바른 gameID 가져오기
 
                     // 서버에 게임 참가 요청 보내기
-                    if (serverFacade.joinGame(gameID, playerColor)) {
+                    if (SERVER_FACADE.joinGame(gameID, playerColor)) {
                         System.out.println("Joined game successfully!");
                     } else {
                         System.out.println("Failed to join game.");
