@@ -33,11 +33,22 @@ public class ServerFacade {
 
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
-            return !jsonResponse.containsKey("error");
+
+            // ✅ 여기 조건 수정: message가 "Error: ..."로 시작하면 실패
+            if (jsonResponse.containsKey("message")) {
+                String message = (String) jsonResponse.get("message");
+                if (message.startsWith("Error")) {
+                    System.out.println(message);  // 로그로 출력해도 좋음
+                    return false;
+                }
+            }
+
+            return true; // 성공
         } catch (Exception e) {
             return false;
         }
     }
+
 
     /**
      * Sends a login request to the server.
@@ -109,7 +120,7 @@ public class ServerFacade {
         headers.put("Authorization", authToken);
 
         String response = sendRequest(serverUrl + "/game", "GET", "", headers);
-        System.out.println("Server response: " + response);
+//        System.out.println("Server response: " + response);
 
         if (response == null) {
             return new ArrayList<>();

@@ -151,21 +151,21 @@ public class ChessClient {
                 }
 
                 try {
-                    int gameIndex = Integer.parseInt(tokens[1]); // 사용자 입력 인덱스 변환
+                    int gameIndex = Integer.parseInt(tokens[1]);
                     String playerColor = tokens[2].toUpperCase();
 
-                    // 게임 목록 가져오기
                     List<GameData> joinGameList = SERVER_FACADE.listGames();
                     if (gameIndex < 1 || gameIndex > joinGameList.size()) {
                         System.out.println("Error: Invalid game ID.");
                         break;
                     }
 
-                    int gameID = joinGameList.get(gameIndex - 1).gameID(); // 올바른 gameID 가져오기
+                    int gameID = joinGameList.get(gameIndex - 1).gameID();
 
-                    // 서버에 게임 참가 요청 보내기
                     if (SERVER_FACADE.joinGame(gameID, playerColor)) {
                         System.out.println("Joined game successfully!");
+                        // ✅ 보드 출력 추가
+                        drawBoard(playerColor);
                     } else {
                         System.out.println("Failed to join game.");
                     }
@@ -175,10 +175,59 @@ public class ChessClient {
                 break;
 
 
+
             default:
                 System.out.println("Unknown command. Type 'help' for available commands.");
                 break;
         }
     }
+
+    public static void drawBoard(String playerColor) {
+        String[][] board = {
+                {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"},
+                {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"},
+                {" ", " ", " ", " ", " ", " ", " ", " "},
+                {" ", " ", " ", " ", " ", " ", " ", " "},
+                {" ", " ", " ", " ", " ", " ", " ", " "},
+                {" ", " ", " ", " ", " ", " ", " ", " "},
+                {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"},
+                {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"},
+        };
+
+        final String RESET = "\u001B[0m";
+        final String RED = "\u001B[31m";
+        final String BLUE = "\u001B[34m";
+
+        int[] rowIndices = playerColor.equalsIgnoreCase("WHITE") ?
+                new int[]{7,6,5,4,3,2,1,0} : new int[]{0,1,2,3,4,5,6,7};
+
+        int[] colIndices = playerColor.equalsIgnoreCase("WHITE") ?
+                new int[]{0,1,2,3,4,5,6,7} : new int[]{7,6,5,4,3,2,1,0};
+
+        System.out.println();
+
+        for (int row : rowIndices) {
+            System.out.print((8 - row) + "  ");
+            for (int col : colIndices) {
+                String piece = board[row][col];
+                if ("♟♜♞♝♛♚".contains(piece)) {
+                    System.out.print(RED + piece + RESET + "  ");
+                } else if ("♙♖♘♗♕♔".contains(piece)) {
+                    System.out.print(BLUE + piece + RESET + "  ");
+                } else {
+                    System.out.print(piece + "  ");
+                }
+            }
+            System.out.println((8 - row));
+        }
+
+        System.out.print("   ");
+        for (int col : colIndices) {
+            char file = (char) ('a' + col);
+            System.out.print(" " + file + " ");
+        }
+        System.out.println("\n");
+    }
+
 
 }
