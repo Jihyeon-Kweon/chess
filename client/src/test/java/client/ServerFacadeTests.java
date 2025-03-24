@@ -139,22 +139,6 @@ public class ServerFacadeTests {
         Assertions.assertFalse(result, "Logout without login should fail");
     }
 
-//    @Test
-//    public void testObserveGamePositive() {
-//        // Given
-//        facade.registerUser("observer", "pass", "obs@example.com");
-//        facade.loginUser("observer", "pass");
-//        facade.createGame("ObserveTest");
-//
-//        List<GameData> games = facade.listGames();
-//        int gameID = games.get(0).gameID();
-//
-//        // When
-//        boolean result = facade.observeGame(gameID);
-//
-//        // Then
-//        assertTrue(result, "Observer should be able to view the game successfully");
-//    }
 
     @Test
     public void testObserveGameNegativeInvalidID() {
