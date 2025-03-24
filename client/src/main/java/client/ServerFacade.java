@@ -164,7 +164,7 @@ public class ServerFacade {
     /**
      * Sends an HTTP request to the specified server endpoint.
      */
-    private String sendRequest(String url, String method, String body, Map<String, String> headers) {
+    protected String sendRequest(String url, String method, String body, Map<String, String> headers) {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(method);
