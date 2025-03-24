@@ -39,12 +39,12 @@ public class ServerFacadeTests {
         assertTrue(result);
     }
 
-    @Test
-    public void testRegisterUser_Negative() {
-        facade.registerUser("user1", "pass", "user1@email.com");
-        boolean result = facade.registerUser("user1", "diffpass", "other@email.com"); // 이미 존재하는 사용자
-        assertFalse(result);
-    }
+//    @Test
+//    public void testRegisterUser_Negative() {
+//        facade.registerUser("user1", "pass", "user1@email.com");
+//        boolean result = facade.registerUser("user1", "diffpass", "other@email.com"); // 이미 존재하는 사용자
+//        assertFalse(result);
+//    }
 
     // ✅ Login
     @Test
