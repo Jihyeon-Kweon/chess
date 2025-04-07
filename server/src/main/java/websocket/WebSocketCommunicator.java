@@ -1,6 +1,7 @@
 package websocket;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketCommunicator {
 
     private static final Map<String, Session> connections = new ConcurrentHashMap<>(); // authToken → Session
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private final GameDAO gameDAO;
     private final AuthDAO authDAO;
 

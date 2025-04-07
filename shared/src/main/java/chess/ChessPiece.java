@@ -1,5 +1,7 @@
 package chess;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -11,7 +13,9 @@ import java.util.HashSet;
  */
 public class ChessPiece {
 
+    @Expose
     private final ChessGame.TeamColor pieceColor;
+    @Expose
     private final PieceType pieceType;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {

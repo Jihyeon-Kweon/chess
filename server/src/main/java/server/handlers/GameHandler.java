@@ -101,7 +101,6 @@ public class GameHandler {
         };
     }
 
-    /** ✅ 관전자 기능: 게임 관전하기 */
     public Route observeGame() {
         return (Request req, Response res) -> {
             try {

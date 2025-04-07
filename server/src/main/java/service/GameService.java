@@ -29,7 +29,6 @@ public class GameService {
             throw new DataAccessException("Error: unauthorized");
         }
 
-        // ✅ games가 null이 아닐지 확인
         List<GameData> games = gameDAO.listGames();
         System.out.println("Retrieved games: " + games);
 
@@ -49,11 +48,17 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
-        GameData game = new GameData(0, null, null, gameName, null);
+        // ✅ 새 ChessGame 객체 생성
+        ChessGame newGameState = new ChessGame();
+
+        GameData game = new GameData(0, null, null, gameName, newGameState);
         int gameID = gameDAO.createGame(game);
-        GameData savedGame = new GameData(gameID, null, null, gameName, null);
+
+        // ✅ 저장된 game 반환
+        GameData savedGame = new GameData(gameID, null, null, gameName, newGameState);
         return savedGame;
     }
+
 
     public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
         AuthData auth = authDAO.getAuth(authToken);

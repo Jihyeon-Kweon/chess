@@ -9,7 +9,10 @@ import java.lang.reflect.Type;
 
 public record GameData(int gameID, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();  // 직렬화 문제 해결을 위한 설정 추가
+    private static final Gson GSON = new GsonBuilder()
+            .excludeFieldsWithoutExposeAnnotation() // <-- 이 줄 추가
+            .setPrettyPrinting()
+            .create();
 
     public String gameState() {
         return GSON.toJson(game); // ChessGame을 JSON으로 변환

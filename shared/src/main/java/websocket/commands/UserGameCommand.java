@@ -1,5 +1,8 @@
 package websocket.commands;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Objects;
 
 /**
@@ -10,11 +13,14 @@ import java.util.Objects;
  */
 public class UserGameCommand {
 
-
+    @Expose
+    @SerializedName("commandType")
     private final CommandType commandType;
-
+    @Expose
+    @SerializedName("authToken")
     private final String authToken;
-
+    @Expose
+    @SerializedName("gameID")
     private final Integer gameID;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {

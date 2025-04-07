@@ -1,5 +1,7 @@
 package chess;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * Represents a single square position on a chess board
  * <p>
@@ -7,8 +9,9 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessPosition {
-
+    @Expose
     private final int row;
+    @Expose
     private final int col;
 
     /**

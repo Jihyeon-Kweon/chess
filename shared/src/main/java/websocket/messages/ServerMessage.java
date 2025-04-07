@@ -1,6 +1,7 @@
 package websocket.messages;
 
 import java.util.Objects;
+import com.google.gson.annotations.Expose;
 
 /**
  * Represents a Message the server can send through a WebSocket
@@ -9,7 +10,8 @@ import java.util.Objects;
  * methods.
  */
 public class ServerMessage {
-    ServerMessageType serverMessageType;
+    @Expose
+    private final ServerMessageType serverMessageType;
 
     public enum ServerMessageType {
         LOAD_GAME,

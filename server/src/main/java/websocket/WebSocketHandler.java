@@ -1,7 +1,10 @@
 package websocket;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dataaccess.DataAccessException;
+import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
@@ -24,7 +27,8 @@ public class WebSocketHandler {
     }
 
     private static final Map<String, Session> userSessions = new ConcurrentHashMap<>();
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
@@ -34,7 +38,6 @@ public class WebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session session, String messageJson) {
         try {
-            // 메시지를 UserGameCommand로 파싱
             UserGameCommand command = gson.fromJson(messageJson, UserGameCommand.class);
             String authToken = command.getAuthToken();
             Integer gameID = command.getGameID();
@@ -61,28 +64,30 @@ public class WebSocketHandler {
 
     private void handleConnect(String authToken, Integer gameID, Session session) {
         try {
-            // 1. 연결 저장
             communicator.addConnection(authToken, session);
 
-            // 2. 게임 데이터 가져오기
-            var game = gameService.getGame(gameID, authToken);
+            // 1. getGame()은 ChessGame을 반환하므로 바로 받기
+            ChessGame game = gameService.getGame(gameID, authToken);
 
-            // 3. 현재 보드 상태 전송
+            // 2. 게임 상태 전송
             LoadGameMessage loadGame = new LoadGameMessage(game);
             session.getRemote().sendString(gson.toJson(loadGame));
 
-            // 4. 연결된 유저 이름
+            // 3. 연결된 사용자 정보
             String username = communicator.getUsername(authToken);
             String playerColor = getPlayerColor(gameID, username);
-
             String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
             String message = username + " connected as " + role;
 
+            // 4. 알림 브로드캐스트
             communicator.broadcast(authToken, gameID, new NotificationMessage(message));
         } catch (Exception e) {
             sendError(session, "Error: " + e.getMessage());
         }
     }
+
+
+
 
     private String getPlayerColor(int gameID, String username) throws DataAccessException {
         var gameData = communicator.getGameDAO().getGame(gameID);
