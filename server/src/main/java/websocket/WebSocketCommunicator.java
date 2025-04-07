@@ -112,5 +112,9 @@ public class WebSocketCommunicator {
         }
     }
 
+    public AuthDAO getAuthDAO() {
+        return this.authDAO;
+    }
+
 
 }

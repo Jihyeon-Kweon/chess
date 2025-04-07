@@ -5,6 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dataaccess.DataAccessException;
 import model.GameData;
+import model.AuthData;
+import dataaccess.AuthDAO;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
@@ -64,28 +66,38 @@ public class WebSocketHandler {
 
     private void handleConnect(String authToken, Integer gameID, Session session) {
         try {
-            communicator.addConnection(authToken, session);
+            System.out.println("🔐 handleConnect - authToken: " + authToken + ", gameID: " + gameID);
 
-            // 1. getGame()은 ChessGame을 반환하므로 바로 받기
+            // 인증 여부 로그
+            AuthData authData = communicator.getAuthDAO().getAuth(authToken);
+            System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
+            System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
+
+            // 🔑 먼저 인증
             ChessGame game = gameService.getGame(gameID, authToken);
 
-            // 2. 게임 상태 전송
+            // 🧠 인증 성공했으니 연결 추가
+            communicator.addConnection(authToken, session);
+
+            // 🎮 게임 상태 전달
             LoadGameMessage loadGame = new LoadGameMessage(game);
             session.getRemote().sendString(gson.toJson(loadGame));
 
-            // 3. 연결된 사용자 정보
+            // 👤 사용자 정보
             String username = communicator.getUsername(authToken);
             String playerColor = getPlayerColor(gameID, username);
             String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
             String message = username + " connected as " + role;
 
-            // 4. 알림 브로드캐스트
+            // 📢 알림 전송
             communicator.broadcast(authToken, gameID, new NotificationMessage(message));
+
         } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("❌ Exception during connect: " + e.getMessage());
             sendError(session, "Error: " + e.getMessage());
         }
     }
-
 
 
 
