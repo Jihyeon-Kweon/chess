@@ -8,6 +8,7 @@ import server.handlers.ClearHandler;
 import server.handlers.GameHandler;
 import server.handlers.UserHandler;
 import spark.Spark;
+import websocket.WebSocketCommunicator;
 import websocket.WebSocketHandler;
 
 public class Server {
@@ -31,6 +32,9 @@ public class Server {
         var clearHandler = new ClearHandler(clearService);
         var userHandler = new UserHandler(userService);
         var gameHandler = new GameHandler(gameService);
+
+        var communicator = new WebSocketCommunicator(gameDAO, authDAO);
+        WebSocketHandler.init(gameService, communicator);
 
         // endpoint
         Spark.delete("/db", clearHandler);

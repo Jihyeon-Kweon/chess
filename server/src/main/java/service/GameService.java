@@ -148,7 +148,7 @@ public class GameService {
         }
 
         try {
-            game.makeMove(move); // ✅ 예외 발생 가능 코드
+            game.makeMove(move);
         } catch (InvalidMoveException e) {
             throw new DataAccessException("Error: invalid move");
         }

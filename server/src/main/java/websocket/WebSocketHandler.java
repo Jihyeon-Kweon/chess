@@ -1,6 +1,7 @@
 package websocket;
 
 import com.google.gson.Gson;
+import dataaccess.DataAccessException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
@@ -9,9 +10,18 @@ import websocket.messages.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import service.GameService;
 
 @WebSocket
 public class WebSocketHandler {
+
+    private static GameService gameService;
+    private static WebSocketCommunicator communicator;
+
+    public static void init(GameService gs, WebSocketCommunicator comm) {
+        gameService = gs;
+        communicator = comm;
+    }
 
     private static final Map<String, Session> userSessions = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
@@ -50,13 +60,37 @@ public class WebSocketHandler {
     }
 
     private void handleConnect(String authToken, Integer gameID, Session session) {
-        // TODO: 유효한 사용자/게임인지 검증
-        // 세션 등록
-        userSessions.put(authToken, session);
+        try {
+            // 1. 연결 저장
+            communicator.addConnection(authToken, session);
 
-        // 게임 상태 불러오기 → LoadGameMessage 보내기
-        // GameService와 WebSocketCommunicator 사용 예정
+            // 2. 게임 데이터 가져오기
+            var game = gameService.getGame(gameID, authToken);
+
+            // 3. 현재 보드 상태 전송
+            LoadGameMessage loadGame = new LoadGameMessage(game);
+            session.getRemote().sendString(gson.toJson(loadGame));
+
+            // 4. 연결된 유저 이름
+            String username = communicator.getUsername(authToken);
+            String playerColor = getPlayerColor(gameID, username);
+
+            String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
+            String message = username + " connected as " + role;
+
+            communicator.broadcast(authToken, gameID, new NotificationMessage(message));
+        } catch (Exception e) {
+            sendError(session, "Error: " + e.getMessage());
+        }
     }
+
+    private String getPlayerColor(int gameID, String username) throws DataAccessException {
+        var gameData = communicator.getGameDAO().getGame(gameID);
+        if (username.equals(gameData.whiteUsername())) return "WHITE";
+        if (username.equals(gameData.blackUsername())) return "BLACK";
+        return null; // observer
+    }
+
 
     private void handleMakeMove(String authToken, Integer gameID, String json) {
         // TODO: json → MakeMoveCommand로 재파싱 후 처리

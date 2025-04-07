@@ -2,10 +2,12 @@ package websocket;
 
 import com.google.gson.Gson;
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -70,4 +72,44 @@ public class WebSocketCommunicator {
             }
         }
     }
+
+    public String getUsername(String authToken) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) throw new DataAccessException("Error: invalid authToken");
+        return auth.username();
+    }
+
+    public void broadcast(String senderToken, int gameID, ServerMessage message) throws DataAccessException {
+        GameData game = gameDAO.getGame(gameID);
+
+        for (var entry : connections.entrySet()) {
+            String token = entry.getKey();
+            Session session = entry.getValue();
+
+            if (!token.equals(senderToken)) {
+                String username = getUsername(token);
+
+                boolean isInGame = username.equals(game.whiteUsername()) ||
+                        username.equals(game.blackUsername());
+
+                if (isInGame || message instanceof NotificationMessage) {
+                    sendMessage(session, message);
+                }
+            }
+        }
+    }
+
+    public GameDAO getGameDAO() {
+        return this.gameDAO;
+    }
+
+    private void sendMessage(Session session, ServerMessage message) {
+        try {
+            session.getRemote().sendString(gson.toJson(message));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
