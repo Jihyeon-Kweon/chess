@@ -8,6 +8,7 @@ import server.handlers.ClearHandler;
 import server.handlers.GameHandler;
 import server.handlers.UserHandler;
 import spark.Spark;
+import websocket.WebSocketHandler;
 
 public class Server {
     public int run(int desiredPort) {
@@ -40,6 +41,9 @@ public class Server {
         Spark.post("/game", gameHandler.createGame());
         Spark.put("/game", gameHandler.joinGame());
         Spark.get("/game/:gameID", gameHandler.observeGame());
+
+        // register websocket endpoint
+        Spark.webSocket("/ws", WebSocketHandler.class);
 
 
         Spark.awaitInitialization();
