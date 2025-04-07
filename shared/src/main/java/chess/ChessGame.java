@@ -167,4 +167,9 @@ public class ChessGame {
     private interface BoardIterator {
         void process(ChessPosition pos, ChessPiece piece);
     }
+
+    private boolean gameOver = false;
+    public void setGameOver(boolean over) { this.gameOver = over; }
+    public boolean isGameOver() { return gameOver; }
+
 }

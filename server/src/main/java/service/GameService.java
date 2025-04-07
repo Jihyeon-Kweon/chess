@@ -1,5 +1,8 @@
 package service;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.DataAccessException;
@@ -100,6 +103,113 @@ public class GameService {
 
         return game;
     }
+
+    public ChessGame getGame(int gameID, String authToken) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) throw new DataAccessException("Error: unauthorized");
+
+        GameData game = gameDAO.getGame(gameID);
+        if (game == null) throw new DataAccessException("Error: bad request");
+
+        return game.game();
+    }
+
+    public ChessGame makeMove(int gameID, String authToken, ChessMove move) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) throw new DataAccessException("Error: unauthorized");
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) throw new DataAccessException("Error: bad request");
+
+        ChessGame game = gameData.game();
+        if (game == null) throw new DataAccessException("Error: no game state");
+
+        if (game.isGameOver()) {
+            throw new DataAccessException("Error: game is already over");
+        }
+
+        String username = auth.username();
+        ChessGame.TeamColor playerColor;
+        if (username.equals(gameData.whiteUsername())) {
+            playerColor = ChessGame.TeamColor.WHITE;
+        } else if (username.equals(gameData.blackUsername())) {
+            playerColor = ChessGame.TeamColor.BLACK;
+        } else {
+            throw new DataAccessException("Error: only players can move");
+        }
+
+        if (game.getTeamTurn() != playerColor) {
+            throw new DataAccessException("Error: not your turn");
+        }
+
+        var validMoves = game.validMoves(move.getStartPosition());
+        if (validMoves == null || !validMoves.contains(move)) {
+            throw new DataAccessException("Error: invalid move");
+        }
+
+        try {
+            game.makeMove(move); // ✅ 예외 발생 가능 코드
+        } catch (InvalidMoveException e) {
+            throw new DataAccessException("Error: invalid move");
+        }
+
+        gameDAO.updateGame(new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game
+        ));
+
+        return game;
+    }
+
+
+    public void resign(int gameID, String authToken) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) throw new DataAccessException("Error: unauthorized");
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) throw new DataAccessException("Error: bad request");
+
+        String username = auth.username();
+        if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
+            throw new DataAccessException("Error: only players can resign");
+        }
+
+        ChessGame game = gameData.game();
+        game.setGameOver(true);  // 이 함수가 없다면 boolean 필드 추가해야 함
+
+        gameDAO.updateGame(new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game
+        ));
+    }
+
+
+    public void leaveGame(int gameID, String authToken) throws DataAccessException {
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) throw new DataAccessException("Error: unauthorized");
+
+        GameData game = gameDAO.getGame(gameID);
+        if (game == null) throw new DataAccessException("Error: bad request");
+
+        String username = auth.username();
+        GameData updated = game;
+
+        if (username.equals(game.whiteUsername())) {
+            updated = new GameData(game.gameID(), null, game.blackUsername(), game.gameName(), game.game());
+        } else if (username.equals(game.blackUsername())) {
+            updated = new GameData(game.gameID(), game.whiteUsername(), null, game.gameName(), game.game());
+        }
+
+        gameDAO.updateGame(updated);
+    }
+
+
 
 
 }
