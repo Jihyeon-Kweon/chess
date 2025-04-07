@@ -14,6 +14,7 @@ import websocket.WebSocketHandler;
 public class Server {
     public int run(int desiredPort) {
         Spark.port(desiredPort);
+        Spark.webSocket("/ws", WebSocketHandler.class);
         Spark.staticFiles.location("web");
 
         DatabaseManager.initializeDatabase();
@@ -45,9 +46,6 @@ public class Server {
         Spark.post("/game", gameHandler.createGame());
         Spark.put("/game", gameHandler.joinGame());
         Spark.get("/game/:gameID", gameHandler.observeGame());
-
-        // register websocket endpoint
-        Spark.webSocket("/ws", WebSocketHandler.class);
 
 
         Spark.awaitInitialization();
