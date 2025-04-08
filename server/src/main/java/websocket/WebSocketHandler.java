@@ -175,20 +175,14 @@ public class WebSocketHandler {
             String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
             String message = username + " resigned. " + winner + " wins.";
 
-            // ✅ NotificationMessage는 모두에게 보내되, 본인(authToken) 제외
+            // ✅ NotificationMessage: 본인 제외, 모두에게 전송
             communicator.broadcastToGame(gameID, new NotificationMessage(message), authToken);
 
-            // ✅ LoadGameMessage는 white/black 플레이어에게만 전송하되, 본인은 제외
-            if (isWhite) {
-                String blackToken = communicator.getAuthToken(gameData.blackUsername());
-                if (blackToken != null) {
-                    communicator.sendMessage(blackToken, new LoadGameMessage(gameData.game()));
-                }
-            } else {
-                String whiteToken = communicator.getAuthToken(gameData.whiteUsername());
-                if (whiteToken != null) {
-                    communicator.sendMessage(whiteToken, new LoadGameMessage(gameData.game()));
-                }
+            // ✅ LoadGameMessage: 반대쪽 플레이어에게만 전송
+            String otherUsername = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
+            String otherToken = communicator.getAuthToken(otherUsername);
+            if (otherToken != null) {
+                communicator.sendMessage(otherToken, new LoadGameMessage(gameData.game()));
             }
 
         } catch (DataAccessException e) {
@@ -196,7 +190,6 @@ public class WebSocketHandler {
             sendErrorToToken(authToken, "Error: " + e.getMessage());
         }
     }
-
 
 
 
