@@ -10,6 +10,7 @@ import dataaccess.AuthDAO;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
+import websocket.commands.MakeMoveCommand;
 import websocket.messages.*;
 
 import java.io.IOException;
@@ -73,28 +74,28 @@ public class WebSocketHandler {
             System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
             System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
 
-            // 🔑 먼저 인증
+            // 먼저 인증
             ChessGame game = gameService.getGame(gameID, authToken);
 
-            // 🧠 인증 성공했으니 연결 추가
+            // 인증 성공했으니 연결 추가
             communicator.addConnection(authToken, session);
 
-            // 🎮 게임 상태 전달
+            // 게임 상태 전달
             LoadGameMessage loadGame = new LoadGameMessage(game);
             session.getRemote().sendString(gson.toJson(loadGame));
 
-            // 👤 사용자 정보
+            // 사용자 정보
             String username = communicator.getUsername(authToken);
             String playerColor = getPlayerColor(gameID, username);
             String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
             String message = username + " connected as " + role;
 
-            // 📢 알림 전송
+            // 알림 전송
             communicator.broadcast(authToken, gameID, new NotificationMessage(message));
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("❌ Exception during connect: " + e.getMessage());
+            System.out.println("Exception during connect: " + e.getMessage());
             sendError(session, "Error: " + e.getMessage());
         }
     }
@@ -110,8 +111,35 @@ public class WebSocketHandler {
 
 
     private void handleMakeMove(String authToken, Integer gameID, String json) {
-        // TODO: json → MakeMoveCommand로 재파싱 후 처리
+        try {
+            MakeMoveCommand command = gson.fromJson(json, MakeMoveCommand.class);
+
+            ChessGame updatedGame = gameService.makeMove(gameID, authToken, command.getMove());
+
+            communicator.sendMessage(authToken, new LoadGameMessage(updatedGame));
+
+            String username = communicator.getUsername(authToken);
+            String msg = username + " made a move from " +
+                    command.getMove().getStartPosition() + " to " +
+                    command.getMove().getEndPosition();
+
+            communicator.broadcast(authToken, gameID, new NotificationMessage(msg));
+            communicator.broadcast(authToken, gameID, new LoadGameMessage(updatedGame));
+
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+            sendErrorToToken(authToken, "Error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendErrorToToken(authToken, "Error: Invalid move command");
+        }
     }
+
+    private void sendErrorToToken(String authToken, String message) {
+        communicator.sendMessage(authToken, new ErrorMessage(message));
+    }
+
+
 
     private void handleLeave(String authToken, Integer gameID) {
         // TODO

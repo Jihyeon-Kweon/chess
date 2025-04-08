@@ -1,5 +1,7 @@
 package chess;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * Represents moving a chess piece on a chessboard
  * <p>
@@ -7,9 +9,11 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessMove {
-
+    @Expose
     private final ChessPosition startPosition;
+    @Expose
     private final ChessPosition endPosition;
+    @Expose
     private final ChessPiece.PieceType promotionPiece;
 
     /**

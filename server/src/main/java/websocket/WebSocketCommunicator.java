@@ -87,18 +87,17 @@ public class WebSocketCommunicator {
             String token = entry.getKey();
             Session session = entry.getValue();
 
+            if (!session.isOpen()) continue;
+
+            // 👇 sender 본인은 제외 (계속 유지)
             if (!token.equals(senderToken)) {
                 String username = getUsername(token);
 
-                boolean isInGame = username.equals(game.whiteUsername()) ||
-                        username.equals(game.blackUsername());
-
-                if (isInGame || message instanceof NotificationMessage) {
-                    sendMessage(session, message);
-                }
+                sendMessage(session, message);
             }
         }
     }
+
 
     public GameDAO getGameDAO() {
         return this.gameDAO;
