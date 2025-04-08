@@ -116,4 +116,20 @@ public class WebSocketCommunicator {
     }
 
 
+    public String getAuthToken(String username) {
+        for (Map.Entry<String, Session> entry : connections.entrySet()) {
+            String token = entry.getKey();
+            try {
+                AuthData auth = authDAO.getAuth(token);
+                if (auth != null && auth.username().equals(username)) {
+                    return token;
+                }
+            } catch (DataAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+
 }

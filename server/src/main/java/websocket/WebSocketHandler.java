@@ -106,6 +106,12 @@ public class WebSocketHandler {
                 return;
             }
 
+            ChessGame game = communicator.getGameDAO().getGame(gameID).game();
+            if (game.isGameOver()) {
+                sendError(session, "Error: game already over");
+                return;
+            }
+
             ChessGame updatedGame = gameService.makeMove(gameID, authToken, command.getMove());
 
             communicator.sendMessage(authToken, new LoadGameMessage(updatedGame));
@@ -163,20 +169,35 @@ public class WebSocketHandler {
                 return;
             }
 
-            // Game 종료 처리
+            // ✅ 게임 종료 처리
             gameData.game().setGameOver(true);
 
             String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
             String message = username + " resigned. " + winner + " wins.";
 
-            communicator.broadcast(authToken, gameID, new NotificationMessage(message));
-            communicator.broadcast(authToken, gameID, new LoadGameMessage(gameData.game()));
+            // ✅ NotificationMessage는 모두에게 보내되, 본인(authToken) 제외
+            communicator.broadcastToGame(gameID, new NotificationMessage(message), authToken);
+
+            // ✅ LoadGameMessage는 white/black 플레이어에게만 전송하되, 본인은 제외
+            if (isWhite) {
+                String blackToken = communicator.getAuthToken(gameData.blackUsername());
+                if (blackToken != null) {
+                    communicator.sendMessage(blackToken, new LoadGameMessage(gameData.game()));
+                }
+            } else {
+                String whiteToken = communicator.getAuthToken(gameData.whiteUsername());
+                if (whiteToken != null) {
+                    communicator.sendMessage(whiteToken, new LoadGameMessage(gameData.game()));
+                }
+            }
 
         } catch (DataAccessException e) {
             e.printStackTrace();
             sendErrorToToken(authToken, "Error: " + e.getMessage());
         }
     }
+
+
 
 
     private void sendError(Session session, String message) {
