@@ -168,6 +168,7 @@ public class ChessGame {
         void process(ChessPosition pos, ChessPiece piece);
     }
 
+    @Expose
     private boolean gameOver = false;
     public void setGameOver(boolean over) { this.gameOver = over; }
     public boolean isGameOver() { return gameOver; }

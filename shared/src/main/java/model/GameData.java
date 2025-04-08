@@ -15,7 +15,7 @@ public record GameData(int gameID, String whiteUsername, String blackUsername, S
             .create();
 
     public String gameState() {
-        return GSON.toJson(game); // ChessGame을 JSON으로 변환
+        return GSON.toJson(game);
     }
 
     public static ChessGame fromGameState(String gameStateJson) {
