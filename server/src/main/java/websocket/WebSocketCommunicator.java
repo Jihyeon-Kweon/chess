@@ -122,7 +122,7 @@ public class WebSocketCommunicator {
             try {
                 AuthData auth = authDAO.getAuth(token);
                 if (auth != null && auth.username().equals(username)) {
-                    return token;
+                    return token; // testing
                 }
             } catch (DataAccessException e) {
                 e.printStackTrace();
