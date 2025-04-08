@@ -136,8 +136,48 @@ public class WebSocketHandler {
     }
 
     private void handleResign(String authToken, Integer gameID) {
-        // TODO
+        try {
+            AuthData authData = communicator.getAuthDAO().getAuth(authToken);
+            if (authData == null) {
+                sendErrorToToken(authToken, "Error: invalid authToken");
+                return;
+            }
+
+            GameData gameData = communicator.getGameDAO().getGame(gameID);
+            if (gameData == null) {
+                sendErrorToToken(authToken, "Error: invalid game ID");
+                return;
+            }
+
+            String username = authData.username();
+            boolean isWhite = username.equals(gameData.whiteUsername());
+            boolean isBlack = username.equals(gameData.blackUsername());
+
+            if (!isWhite && !isBlack) {
+                sendErrorToToken(authToken, "Error: observers can't resign");
+                return;
+            }
+
+            if (gameData.game().isGameOver()) {
+                sendErrorToToken(authToken, "Error: game already over");
+                return;
+            }
+
+            // Game 종료 처리
+            gameData.game().setGameOver(true);
+
+            String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
+            String message = username + " resigned. " + winner + " wins.";
+
+            communicator.broadcast(authToken, gameID, new NotificationMessage(message));
+            communicator.broadcast(authToken, gameID, new LoadGameMessage(gameData.game()));
+
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+            sendErrorToToken(authToken, "Error: " + e.getMessage());
+        }
     }
+
 
     private void sendError(Session session, String message) {
         try {
