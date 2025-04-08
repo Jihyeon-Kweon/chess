@@ -32,7 +32,6 @@ public class WebSocketHandler {
     private static final Map<String, Session> userSessions = new ConcurrentHashMap<>();
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
-
     @OnWebSocketConnect
     public void onConnect(Session session) {
         System.out.println("WebSocket connected: " + session);
@@ -45,10 +44,9 @@ public class WebSocketHandler {
             String authToken = command.getAuthToken();
             Integer gameID = command.getGameID();
 
-            // CONNECT, MAKE_MOVE, etc 처리
             switch (command.getCommandType()) {
                 case CONNECT -> handleConnect(authToken, gameID, session);
-                case MAKE_MOVE -> handleMakeMove(authToken, gameID, messageJson);
+                case MAKE_MOVE -> handleMakeMove(authToken, gameID, messageJson, session);
                 case LEAVE -> handleLeave(authToken, gameID);
                 case RESIGN -> handleResign(authToken, gameID);
             }
@@ -69,50 +67,44 @@ public class WebSocketHandler {
         try {
             System.out.println("🔐 handleConnect - authToken: " + authToken + ", gameID: " + gameID);
 
-            // 인증 여부 로그
             AuthData authData = communicator.getAuthDAO().getAuth(authToken);
             System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
-            System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
 
-            // 먼저 인증
             ChessGame game = gameService.getGame(gameID, authToken);
-
-            // 인증 성공했으니 연결 추가
             communicator.addConnection(authToken, session);
 
-            // 게임 상태 전달
             LoadGameMessage loadGame = new LoadGameMessage(game);
             session.getRemote().sendString(gson.toJson(loadGame));
 
-            // 사용자 정보
             String username = communicator.getUsername(authToken);
             String playerColor = getPlayerColor(gameID, username);
             String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
             String message = username + " connected as " + role;
 
-            // 알림 전송
             communicator.broadcast(authToken, gameID, new NotificationMessage(message));
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Exception during connect: " + e.getMessage());
             sendError(session, "Error: " + e.getMessage());
         }
     }
-
-
 
     private String getPlayerColor(int gameID, String username) throws DataAccessException {
         var gameData = communicator.getGameDAO().getGame(gameID);
         if (username.equals(gameData.whiteUsername())) return "WHITE";
         if (username.equals(gameData.blackUsername())) return "BLACK";
-        return null; // observer
+        return null;
     }
 
-
-    private void handleMakeMove(String authToken, Integer gameID, String json) {
+    private void handleMakeMove(String authToken, Integer gameID, String json, Session session) {
         try {
             MakeMoveCommand command = gson.fromJson(json, MakeMoveCommand.class);
+
+            AuthData authData = communicator.getAuthDAO().getAuth(authToken);
+            if (authData == null) {
+                sendError(session, "Error: invalid auth token");
+                return;
+            }
 
             ChessGame updatedGame = gameService.makeMove(gameID, authToken, command.getMove());
 
@@ -128,18 +120,16 @@ public class WebSocketHandler {
 
         } catch (DataAccessException e) {
             e.printStackTrace();
-            sendErrorToToken(authToken, "Error: " + e.getMessage());
+            sendError(session, "Error: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            sendErrorToToken(authToken, "Error: Invalid move command");
+            sendError(session, "Error: Invalid move command");
         }
     }
 
     private void sendErrorToToken(String authToken, String message) {
         communicator.sendMessage(authToken, new ErrorMessage(message));
     }
-
-
 
     private void handleLeave(String authToken, Integer gameID) {
         // TODO
