@@ -143,66 +143,38 @@ public class WebSocketHandler {
 
     private void handleResign(String authToken, Integer gameID) {
         try {
-            System.out.println("\n🛑 [RESIGN REQUEST] Received resign request.");
-            System.out.println("🔐 AuthToken: " + authToken + ", 🎮 GameID: " + gameID);
-
             AuthData authData = communicator.getAuthDAO().getAuth(authToken);
             if (authData == null) {
-                System.out.println("❌ Invalid authToken: " + authToken);
                 sendErrorToToken(authToken, "Error: invalid authToken");
                 return;
             }
 
             GameData gameData = communicator.getGameDAO().getGame(gameID);
             if (gameData == null) {
-                System.out.println("❌ Invalid gameID: " + gameID);
                 sendErrorToToken(authToken, "Error: invalid game ID");
                 return;
             }
 
             String username = authData.username();
-            System.out.println("👤 Username: " + username);
-
             boolean isWhite = username.equals(gameData.whiteUsername());
             boolean isBlack = username.equals(gameData.blackUsername());
 
             if (!isWhite && !isBlack) {
-                System.out.println("⚠️ Observer attempted to resign: " + username);
                 sendErrorToToken(authToken, "Error: observers can't resign");
                 return;
             }
 
             if (gameData.game().isGameOver()) {
-                System.out.println("⚠️ Game already over. Resign rejected for: " + username);
                 sendErrorToToken(authToken, "Error: game already over");
                 return;
             }
 
-            // ✅ 게임 종료 처리
             gameData.game().setGameOver(true);
-            System.out.println("✅ Game marked as over.");
 
             String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
             String resignMessage = username + " resigned. " + winner + " wins.";
-            System.out.println("📢 Notification: " + resignMessage);
 
-            // ✅ NotificationMessage: 본인 제외, 모두에게 전송
-            communicator.broadcastToGame(gameID, new NotificationMessage(resignMessage), authToken);
-
-            // ✅ LoadGameMessage: 반대쪽 플레이어에게만 전송
-            String otherUsername = winner;
-            String otherToken = communicator.getAuthToken(otherUsername);
-
-            System.out.println("📦 Sending LoadGameMessage to: " + otherUsername + " / token = " + otherToken);
-
-            if (otherToken != null) {
-                communicator.sendMessage(otherToken, new LoadGameMessage(gameData.game()));
-                System.out.println("✅ LoadGameMessage successfully sent.");
-            } else {
-                System.out.println("⚠️ Could not find token for: " + otherUsername);
-            }
-
-            System.out.println("🛑 [RESIGN REQUEST COMPLETED]\n");
+            communicator.broadcast(null, gameID, new NotificationMessage(resignMessage));
 
         } catch (DataAccessException e) {
             e.printStackTrace();
