@@ -46,6 +46,10 @@ public class ChessGame {
     }
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        if (gameOver) {
+            throw new InvalidMoveException("The game is over. No more moves allowed.");
+        }
+
         ChessPiece piece = board.getPiece(move.getStartPosition());
 
         if (piece == null || piece.getTeamColor() != currentTurn) {
@@ -66,6 +70,7 @@ public class ChessGame {
 
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
+
 
     public boolean isInCheck(ChessGame.TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition(teamColor);

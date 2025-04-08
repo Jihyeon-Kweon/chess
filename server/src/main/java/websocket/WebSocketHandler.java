@@ -1,6 +1,7 @@
 package websocket;
 
 import chess.ChessGame;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dataaccess.DataAccessException;
@@ -112,7 +113,16 @@ public class WebSocketHandler {
                 return;
             }
 
-            ChessGame updatedGame = gameService.makeMove(gameID, authToken, command.getMove());
+            ChessGame updatedGame;
+            try {
+                updatedGame = gameService.makeMove(gameID, authToken, command.getMove());
+            } catch (InvalidMoveException e) {
+                sendError(session, "Error: invalid move");
+                return;
+            } catch (DataAccessException e) {
+                sendError(session, e.getMessage());
+                return;
+            }
 
             communicator.sendMessage(authToken, new LoadGameMessage(updatedGame));
 
@@ -124,14 +134,13 @@ public class WebSocketHandler {
             communicator.broadcast(authToken, gameID, new NotificationMessage(msg));
             communicator.broadcast(authToken, gameID, new LoadGameMessage(updatedGame));
 
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-            sendError(session, "Error: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             sendError(session, "Error: Invalid move command");
         }
     }
+
+
 
     private void sendErrorToToken(String authToken, String message) {
         communicator.sendMessage(authToken, new ErrorMessage(message));
@@ -169,7 +178,9 @@ public class WebSocketHandler {
                 return;
             }
 
+            // 🔥 게임 종료 처리 후 DB 업데이트
             gameData.game().setGameOver(true);
+            communicator.getGameDAO().updateGame(gameData);
 
             String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
             String resignMessage = username + " resigned. " + winner + " wins.";
@@ -181,6 +192,7 @@ public class WebSocketHandler {
             sendErrorToToken(authToken, "Error: " + e.getMessage());
         }
     }
+
 
 
 

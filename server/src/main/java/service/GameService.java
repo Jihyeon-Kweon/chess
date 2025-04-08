@@ -119,20 +119,32 @@ public class GameService {
         return game.game();
     }
 
-    public ChessGame makeMove(int gameID, String authToken, ChessMove move) throws DataAccessException {
-        AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) throw new DataAccessException("Error: unauthorized");
+    public ChessGame makeMove(int gameID, String authToken, ChessMove move)
+            throws DataAccessException, InvalidMoveException {
 
+        // 1. 인증 토큰 검증
+        AuthData auth = authDAO.getAuth(authToken);
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        // 2. 게임 데이터 불러오기
         GameData gameData = gameDAO.getGame(gameID);
-        if (gameData == null) throw new DataAccessException("Error: bad request");
+        if (gameData == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         ChessGame game = gameData.game();
-        if (game == null) throw new DataAccessException("Error: no game state");
+        if (game == null) {
+            throw new DataAccessException("Error: no game state");
+        }
 
+        // 3. 게임 종료 여부 확인
         if (game.isGameOver()) {
             throw new DataAccessException("Error: game is already over");
         }
 
+        // 4. 유저가 플레이어인지 확인
         String username = auth.username();
         ChessGame.TeamColor playerColor;
         if (username.equals(gameData.whiteUsername())) {
@@ -143,21 +155,21 @@ public class GameService {
             throw new DataAccessException("Error: only players can move");
         }
 
+        // 5. 턴이 맞는지 확인
         if (game.getTeamTurn() != playerColor) {
             throw new DataAccessException("Error: not your turn");
         }
 
+        // 6. 유효한 이동인지 확인
         var validMoves = game.validMoves(move.getStartPosition());
         if (validMoves == null || !validMoves.contains(move)) {
-            throw new DataAccessException("Error: invalid move");
+            throw new InvalidMoveException("Error: invalid move");
         }
 
-        try {
-            game.makeMove(move);
-        } catch (InvalidMoveException e) {
-            throw new DataAccessException("Error: invalid move");
-        }
+        // 7. 이동 수행 (예외 발생 가능)
+        game.makeMove(move);
 
+        // 8. 게임 데이터 업데이트
         gameDAO.updateGame(new GameData(
                 gameData.gameID(),
                 gameData.whiteUsername(),
@@ -169,30 +181,6 @@ public class GameService {
         return game;
     }
 
-
-    public void resign(int gameID, String authToken) throws DataAccessException {
-        AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) throw new DataAccessException("Error: unauthorized");
-
-        GameData gameData = gameDAO.getGame(gameID);
-        if (gameData == null) throw new DataAccessException("Error: bad request");
-
-        String username = auth.username();
-        if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
-            throw new DataAccessException("Error: only players can resign");
-        }
-
-        ChessGame game = gameData.game();
-        game.setGameOver(true);  // 이 함수가 없다면 boolean 필드 추가해야 함
-
-        gameDAO.updateGame(new GameData(
-                gameData.gameID(),
-                gameData.whiteUsername(),
-                gameData.blackUsername(),
-                gameData.gameName(),
-                game
-        ));
-    }
 
 
     public void leaveGame(int gameID, String authToken) throws DataAccessException {
