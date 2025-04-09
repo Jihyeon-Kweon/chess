@@ -1,46 +1,60 @@
 package client;
 
+import chess.ChessGame;
+import chess.ChessPosition;
+
+import static chess.ChessPiece.PieceType.*;
 import static ui.EscapeSequences.*;
 
 public class ChessClientUtils {
 
-    public static void drawBoard(String perspective) {
-        String[][] board = getInitialBoard();
-
+    public static void drawBoard(ChessGame game, String perspective) {
         boolean isWhite = perspective.equalsIgnoreCase("WHITE");
 
         int[] rows = isWhite ? new int[]{8,7,6,5,4,3,2,1} : new int[]{1,2,3,4,5,6,7,8};
         char[] cols = isWhite ? new char[]{'a','b','c','d','e','f','g','h'} : new char[]{'h','g','f','e','d','c','b','a'};
 
-        // Top column labels
+        // Top labels
         System.out.print("   ");
-        for (char col : cols) {
-            System.out.print(" " + col + " ");
-        }
+        for (char col : cols) System.out.print(" " + col + " ");
         System.out.println();
 
         for (int row : rows) {
             System.out.print(" " + row + " ");
             for (int i = 0; i < cols.length; i++) {
-                int actualCol = isWhite ? i : (cols.length - 1 - i);
-                boolean isLight = (row + actualCol) % 2 == 0;
-                String bgColor = isLight ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
+                int actualCol = isWhite ? i + 1 : 8 - i;  // 실제 컬럼 계산
+                ChessPosition pos = new ChessPosition(row, actualCol);
+                var piece = game.getBoard().getPiece(pos);
 
-                String piece = board[8 - row][actualCol];
-                String coloredPiece = colorizePiece(piece);
+                boolean isLight = (row + actualCol) % 2 == 0;  // ⚠️ 여기 i → actualCol로 변경
+                String bg = isLight ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
+                String pieceStr = "   ";
 
-                System.out.print(bgColor + coloredPiece + RESET_BG_COLOR + RESET_TEXT_COLOR);
+                if (piece != null) {
+                    String letter = switch (piece.getPieceType()) {
+                        case KING -> "K";
+                        case QUEEN -> "Q";
+                        case ROOK -> "R";
+                        case BISHOP -> "B";
+                        case KNIGHT -> "N";
+                        case PAWN -> "P";
+                    };
+                    String color = piece.getTeamColor() == ChessGame.TeamColor.WHITE ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_BLUE;
+                    pieceStr = color + " " + letter + " " + RESET_TEXT_COLOR;
+                }
+
+                System.out.print(bg + pieceStr + RESET_BG_COLOR);
             }
             System.out.println(" " + row);
         }
 
-        // Bottom column labels
+
+        // Bottom labels
         System.out.print("   ");
-        for (char col : cols) {
-            System.out.print(" " + col + " ");
-        }
+        for (char col : cols) System.out.print(" " + col + " ");
         System.out.println();
     }
+
 
     private static String[][] getInitialBoard() {
         return new String[][]{
@@ -73,8 +87,4 @@ public class ChessClientUtils {
         };
     }
 
-    public static void observeGame(int gameID){
-        System.out.println("Observing game " + gameID + "...");
-        drawBoard("WHITE");
-    }
 }

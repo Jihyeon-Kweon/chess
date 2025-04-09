@@ -1,5 +1,6 @@
 package client;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
 import com.google.gson.Gson;
@@ -27,6 +28,7 @@ public class ChessClient {
     private static final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private static String currentAuthToken;
     private static int currentGameID;
+    private static String currentPlayerColor = "WHITE"; // 기본값
 
     public static void main(String[] args) {
         connectWebSocket();
@@ -73,14 +75,48 @@ public class ChessClient {
                     String note = jsonObj.get("message").getAsString();
                     System.out.println("\n[Notification] " + note);
                 }
+
                 case "LOAD_GAME" -> {
                     System.out.println("\n[Game Updated] Board received.");
-                    // 원한다면 여기서 보드를 예쁘게 출력해도 돼
+
+                    // game 객체 파싱
+                    JsonObject gameJson = jsonObj.getAsJsonObject("game");
+                    ChessGame game = gson.fromJson(gameJson, ChessGame.class);
+
+                    // 현재 로그인된 사용자 이름 가져오기
+                    String currentUser = SERVER_FACADE.getCurrentUsername();
+                    String perspective = "WHITE"; // 기본값
+
+                    // 현재 GameData에서 WHITE or BLACK 여부 확인
+                    List<GameData> games = SERVER_FACADE.listGames();
+                    GameData currentGame = games.stream()
+                            .filter(g -> g.gameID() == currentGameID)
+                            .findFirst()
+                            .orElse(null);
+
+                    if (currentGame != null && currentUser != null) {
+                        if (currentUser.equals(currentGame.blackUsername())) {
+                            perspective = "BLACK";
+                        } else if (currentUser.equals(currentGame.whiteUsername())) {
+                            perspective = "WHITE";
+                        } else {
+                            perspective = "WHITE"; // 관전자도 WHITE 기준으로 봄
+                        }
+                    }
+
+                    // 보드 출력
+                    ChessClientUtils.drawBoard(game, perspective);
                 }
+
                 case "ERROR" -> {
-                    String error = jsonObj.get("message").getAsString();
+                    // "errorMessage" 또는 "message" 둘 중 하나가 있는지 확인
+                    String error = jsonObj.has("errorMessage")
+                            ? jsonObj.get("errorMessage").getAsString()
+                            : jsonObj.get("message").getAsString();  // fallback
                     System.out.println("\n[Error] " + error);
                 }
+
+
                 default -> {
                     System.out.println("\n[WebSocket] Unknown message type:");
                     System.out.println(message);
@@ -219,6 +255,7 @@ public class ChessClient {
             }
             int gameID = games.get(index - 1).gameID();
             currentGameID = gameID;
+            currentPlayerColor = color;
             if (SERVER_FACADE.joinGame(gameID, color)) {
                 System.out.println("Joined game!");
                 sendCommand(new UserGameCommand(CommandType.CONNECT, currentAuthToken, gameID));
@@ -244,6 +281,7 @@ public class ChessClient {
             }
             int gameID = games.get(index - 1).gameID();
             currentGameID = gameID;
+            currentPlayerColor = "WHITE"; // default 관전자 시야
             sendCommand(new UserGameCommand(CommandType.CONNECT, currentAuthToken, gameID));
         } catch (NumberFormatException e) {
             System.out.println("GAME_ID must be a number.");
@@ -293,4 +331,22 @@ public class ChessClient {
             e.printStackTrace();
         }
     }
+
+    private static String getPerspective(ChessGame game) {
+        try {
+            // 현재 사용자 이름
+            String currentUser = SERVER_FACADE.getUsername(currentAuthToken);
+            // gameData에서 color 확인 (직접 구현해도 OK)
+            GameData data = SERVER_FACADE.listGames().stream()
+                    .filter(g -> g.gameID() == currentGameID)
+                    .findFirst()
+                    .orElse(null);
+            if (data != null) {
+                if (currentUser.equals(data.whiteUsername())) return "WHITE";
+                if (currentUser.equals(data.blackUsername())) return "BLACK";
+            }
+        } catch (Exception ignored) {}
+        return "WHITE"; // default to WHITE perspective
+    }
+
 }

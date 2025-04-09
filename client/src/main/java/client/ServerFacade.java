@@ -34,7 +34,7 @@ public class ServerFacade {
         try {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
 
-            // ✅ 여기 조건 수정: message가 "Error: ..."로 시작하면 실패
+            // 여기 조건 수정: message가 "Error: ..."로 시작하면 실패
             if (jsonResponse.containsKey("message")) {
                 String message = (String) jsonResponse.get("message");
                 if (message.startsWith("Error")) {
@@ -49,6 +49,11 @@ public class ServerFacade {
         }
     }
 
+    private String currentUsername;
+
+    public String getCurrentUsername(){
+        return currentUsername;
+    }
 
     /**
      * Sends a login request to the server.
@@ -69,6 +74,7 @@ public class ServerFacade {
             Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
             if (jsonResponse.containsKey("authToken")) {
                 this.authToken = (String) jsonResponse.get("authToken");
+                this.currentUsername = username;
                 return true;
             }
         } catch (Exception e) {
@@ -279,6 +285,29 @@ public class ServerFacade {
 
     public String getAuthToken() {
         return this.authToken;
+    }
+
+
+    public String getUsername(String token) {
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", token);
+
+        String response = sendRequest(serverUrl + "/auth", "GET", "", headers);
+
+        if (response == null) {
+            return null;
+        }
+
+        try {
+            Map<String, Object> jsonResponse = new Gson().fromJson(response, Map.class);
+            return (String) jsonResponse.get("username");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 
