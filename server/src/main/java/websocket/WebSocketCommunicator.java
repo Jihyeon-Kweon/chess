@@ -8,7 +8,6 @@ import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
-import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -17,8 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketCommunicator {
 
+    // 전체 연결 (optional: 디버깅 or fallback용)
     private static final Map<String, Session> connections = new ConcurrentHashMap<>(); // authToken → Session
-    private static final Map<String, String> tokenToUsername = new ConcurrentHashMap<>(); // authToken → username
+
+    // 게임별 연결 관리: gameID → (authToken → Session)
+    private static final Map<Integer, Map<String, Session>> gameConnections = new ConcurrentHashMap<>();
+
+    // authToken → username 매핑
+    private static final Map<String, String> tokenToUsername = new ConcurrentHashMap<>();
 
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private final GameDAO gameDAO;
@@ -29,8 +34,10 @@ public class WebSocketCommunicator {
         this.authDAO = authDAO;
     }
 
-    public void addConnection(String authToken, Session session) {
+    public void addConnection(String authToken, int gameID, Session session) {
         connections.put(authToken, session);
+        gameConnections.computeIfAbsent(gameID, k -> new ConcurrentHashMap<>()).put(authToken, session);
+
         try {
             AuthData auth = authDAO.getAuth(authToken);
             if (auth != null) {
@@ -44,55 +51,17 @@ public class WebSocketCommunicator {
     public void removeConnection(String authToken) {
         connections.remove(authToken);
         tokenToUsername.remove(authToken);
+
+        // 게임 세션에서도 제거
+        for (Map<String, Session> gameMap : gameConnections.values()) {
+            gameMap.remove(authToken);
+        }
     }
 
     public void sendMessage(String authToken, ServerMessage message) {
         Session session = connections.get(authToken);
         if (session != null && session.isOpen()) {
-            try {
-                session.getRemote().sendString(gson.toJson(message));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void broadcastToGame(int gameID, ServerMessage message, String exceptAuthToken) {
-        for (var entry : connections.entrySet()) {
-            String token = entry.getKey();
-            Session session = entry.getValue();
-
-            if (!session.isOpen()) continue;
-
-            try {
-                String username = tokenToUsername.get(token);
-                if (username == null) continue;
-
-                GameData game = gameDAO.getGame(gameID);
-                if (game == null) continue;
-
-                boolean inGame = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
-
-                if (inGame && !token.equals(exceptAuthToken)) {
-                    session.getRemote().sendString(gson.toJson(message));
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void broadcast(String senderToken, int gameID, ServerMessage message) throws DataAccessException {
-        for (var entry : connections.entrySet()) {
-            String token = entry.getKey();
-            Session session = entry.getValue();
-
-            if (!session.isOpen()) continue;
-
-            if (!token.equals(senderToken)) {
-                sendMessage(session, message);
-            }
+            sendMessage(session, message);
         }
     }
 
@@ -111,6 +80,21 @@ public class WebSocketCommunicator {
         }
     }
 
+    public void broadcastToGame(int gameID, ServerMessage message, String exceptAuthToken) {
+        Map<String, Session> gameSessions = gameConnections.get(gameID);
+        if (gameSessions == null) return;
+
+        for (Map.Entry<String, Session> entry : gameSessions.entrySet()) {
+            String token = entry.getKey();
+            Session session = entry.getValue();
+
+            if (!session.isOpen()) continue;
+
+            if (!token.equals(exceptAuthToken)) {
+                sendMessage(session, message);
+            }
+        }
+    }
 
     public String getUsername(String authToken) throws DataAccessException {
         String username = tokenToUsername.get(authToken);
@@ -136,7 +120,6 @@ public class WebSocketCommunicator {
         }
         return null;
     }
-
 
     public GameDAO getGameDAO() {
         return this.gameDAO;

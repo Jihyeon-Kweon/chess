@@ -72,7 +72,7 @@ public class WebSocketHandler {
             System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
 
             ChessGame game = gameService.getGame(gameID, authToken);
-            communicator.addConnection(authToken, session);
+            communicator.addConnection(authToken, gameID, session);
 
             LoadGameMessage loadGame = new LoadGameMessage(game);
             session.getRemote().sendString(gson.toJson(loadGame));
@@ -82,7 +82,7 @@ public class WebSocketHandler {
             String role = (playerColor != null) ? playerColor.toLowerCase() : "observer";
             String message = username + " connected as " + role;
 
-            communicator.broadcast(authToken, gameID, new NotificationMessage(message));
+            communicator.broadcastToGame(gameID, new NotificationMessage(message), authToken);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -131,8 +131,8 @@ public class WebSocketHandler {
                     command.getMove().getStartPosition() + " to " +
                     command.getMove().getEndPosition();
 
-            communicator.broadcast(authToken, gameID, new NotificationMessage(msg));
-            communicator.broadcast(authToken, gameID, new LoadGameMessage(updatedGame));
+            communicator.broadcastToGame(gameID, new NotificationMessage(msg), authToken);
+            communicator.broadcastToGame(gameID, new LoadGameMessage(updatedGame), authToken);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -155,7 +155,7 @@ public class WebSocketHandler {
 
             // 모든 유저(플레이어 + 옵저버)에게 메시지 보내기
             String message = username + " left the game.";
-            communicator.broadcast(null, gameID, new NotificationMessage(message));
+            communicator.broadcastToGame(gameID, new NotificationMessage(message), null);
 
         } catch (DataAccessException e) {
             sendErrorToToken(authToken, "Error: " + e.getMessage());
@@ -200,7 +200,7 @@ public class WebSocketHandler {
             String winner = isWhite ? gameData.blackUsername() : gameData.whiteUsername();
             String resignMessage = username + " resigned. " + winner + " wins.";
 
-            communicator.broadcast(null, gameID, new NotificationMessage(resignMessage));
+            communicator.broadcastToGame(gameID, new NotificationMessage(resignMessage), null);
 
         } catch (DataAccessException e) {
             e.printStackTrace();
