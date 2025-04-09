@@ -277,6 +277,10 @@ public class ServerFacade {
         }
     }
 
+    public String getAuthToken() {
+        return this.authToken;
+    }
+
 
 
 }
