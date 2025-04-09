@@ -134,6 +134,8 @@ public class WebSocketHandler {
                     command.getMove().getStartPosition() + " to " +
                     command.getMove().getEndPosition();
 
+            System.out.println("Sending Notification: "+msg);
+
             communicator.broadcastToGame(gameID, new NotificationMessage(msg), authToken);
             communicator.broadcastToGame(gameID, new LoadGameMessage(updatedGame), authToken);
 

@@ -4,6 +4,7 @@ import chess.ChessMove;
 import chess.ChessPosition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import model.GameData;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
@@ -63,9 +64,37 @@ public class ChessClient {
 
     @OnMessage
     public void onMessage(String message) {
-        System.out.println("\nWebSocket Message: " + message);
+        try {
+            var jsonObj = gson.fromJson(message, JsonObject.class);
+            String type = jsonObj.get("serverMessageType").getAsString();
+
+            switch (type) {
+                case "NOTIFICATION" -> {
+                    String note = jsonObj.get("message").getAsString();
+                    System.out.println("\n[Notification] " + note);
+                }
+                case "LOAD_GAME" -> {
+                    System.out.println("\n[Game Updated] Board received.");
+                    // 원한다면 여기서 보드를 예쁘게 출력해도 돼
+                }
+                case "ERROR" -> {
+                    String error = jsonObj.get("message").getAsString();
+                    System.out.println("\n[Error] " + error);
+                }
+                default -> {
+                    System.out.println("\n[WebSocket] Unknown message type:");
+                    System.out.println(message);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("\n[WebSocket] Failed to parse message:");
+            e.printStackTrace();
+            System.out.println(message);
+        }
+
         System.out.print(isLoggedIn ? "[LOGGED_IN] >>> " : "[LOGGED_OUT] >>> ");
     }
+
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
