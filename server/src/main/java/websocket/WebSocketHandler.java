@@ -147,8 +147,23 @@ public class WebSocketHandler {
     }
 
     private void handleLeave(String authToken, Integer gameID) {
-        // TODO
+        try {
+            String username = communicator.getUsername(authToken); // 먼저 유저 이름 가져오기
+
+            gameService.leaveGame(gameID, authToken); // DB에서 유저 제거
+            communicator.removeConnection(authToken); // 연결 제거
+
+            // 모든 유저(플레이어 + 옵저버)에게 메시지 보내기
+            String message = username + " left the game.";
+            communicator.broadcast(null, gameID, new NotificationMessage(message));
+
+        } catch (DataAccessException e) {
+            sendErrorToToken(authToken, "Error: " + e.getMessage());
+        }
     }
+
+
+
 
     private void handleResign(String authToken, Integer gameID) {
         try {
