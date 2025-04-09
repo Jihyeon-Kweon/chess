@@ -82,13 +82,17 @@ public class WebSocketCommunicator {
 
     public void broadcastToGame(int gameID, ServerMessage message, String exceptAuthToken) {
         Map<String, Session> gameSessions = gameConnections.get(gameID);
-        if (gameSessions == null) return;
+        if (gameSessions == null) {
+            return;
+        }
 
         for (Map.Entry<String, Session> entry : gameSessions.entrySet()) {
             String token = entry.getKey();
             Session session = entry.getValue();
 
-            if (!session.isOpen()) continue;
+            if (!session.isOpen()) {
+                continue;
+            }
 
             if (!token.equals(exceptAuthToken)) {
                 sendMessage(session, message);
@@ -107,7 +111,9 @@ public class WebSocketCommunicator {
             String token = entry.getKey();
             Session session = entry.getValue();
 
-            if (!session.isOpen()) continue;
+            if (!session.isOpen()) {
+                continue;
+            }
 
             try {
                 AuthData auth = authDAO.getAuth(token);

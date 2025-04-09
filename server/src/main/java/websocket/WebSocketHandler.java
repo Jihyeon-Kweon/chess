@@ -61,7 +61,6 @@ public class WebSocketHandler {
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
         System.out.println("WebSocket closed: " + session);
-        // TODO: 세션 정리 필요 시 처리
     }
 
     private void handleConnect(String authToken, Integer gameID, Session session) {
@@ -92,8 +91,12 @@ public class WebSocketHandler {
 
     private String getPlayerColor(int gameID, String username) throws DataAccessException {
         var gameData = communicator.getGameDAO().getGame(gameID);
-        if (username.equals(gameData.whiteUsername())) return "WHITE";
-        if (username.equals(gameData.blackUsername())) return "BLACK";
+        if (username.equals(gameData.whiteUsername())) {
+            return "WHITE";
+        }
+        if (username.equals(gameData.blackUsername())) {
+            return "BLACK";
+        }
         return null;
     }
 

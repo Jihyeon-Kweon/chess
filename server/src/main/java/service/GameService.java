@@ -111,10 +111,14 @@ public class GameService {
 
     public ChessGame getGame(int gameID, String authToken) throws DataAccessException {
         AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) throw new DataAccessException("Error: unauthorized");
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
 
         GameData game = gameDAO.getGame(gameID);
-        if (game == null) throw new DataAccessException("Error: bad request");
+        if (game == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         return game.game();
     }
@@ -185,10 +189,14 @@ public class GameService {
 
     public void leaveGame(int gameID, String authToken) throws DataAccessException {
         AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) throw new DataAccessException("Error: unauthorized");
+        if (auth == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
 
         GameData game = gameDAO.getGame(gameID);
-        if (game == null) throw new DataAccessException("Error: bad request");
+        if (game == null) {
+            throw new DataAccessException("Error: bad request");
+        }
 
         String username = auth.username();
         GameData updated = game;
