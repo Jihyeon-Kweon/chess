@@ -73,8 +73,15 @@ public class ChessClient {
             switch (type) {
                 case "NOTIFICATION" -> {
                     String note = jsonObj.get("message").getAsString();
-                    System.out.println("\n[Notification] " + note);
+                    if (note.toLowerCase().contains("checkmate")) {
+                        System.out.println("\n♔♚ [CHECKMATE] " + note);
+                    } else if (note.toLowerCase().contains("wins")) {
+                        System.out.println("\n🏆 [GAME OVER] " + note);
+                    } else {
+                        System.out.println("\n[Notification] " + note);
+                    }
                 }
+
 
                 case "LOAD_GAME" -> {
                     System.out.println("\n[Game Updated] Board received.");
@@ -164,6 +171,7 @@ public class ChessClient {
             case "move" -> makeMove(tokens);
             case "leave" -> leaveGame();
             case "resign" -> resignGame();
+            case "redraw" -> redrawBoard();
             default -> System.out.println("Unknown command. Type 'help' for help.");
         }
     }
@@ -173,7 +181,7 @@ public class ChessClient {
     }
 
     private static void printPostLoginHelp() {
-        System.out.println("Commands: help, logout, create <GAME_NAME>, list, join <GAME_ID> <COLOR>, observe <GAME_ID>, move <START> <END>, leave, resign");
+        System.out.println("Commands: help, logout, create <GAME_NAME>, list, join <GAME_ID> <COLOR>, observe <GAME_ID>, move <START> <END>, leave, resign, redraw");
     }
 
     private static void quit() {
@@ -355,6 +363,40 @@ public class ChessClient {
             }
         } catch (Exception ignored) {}
         return "WHITE"; // default to WHITE perspective
+    }
+
+    private static void redrawBoard() {
+        try {
+            List<GameData> games = SERVER_FACADE.listGames();
+            GameData currentGame = games.stream()
+                    .filter(g -> g.gameID() == currentGameID)
+                    .findFirst()
+                    .orElse(null);
+
+            if (currentGame == null) {
+                System.out.println("Game not found.");
+                return;
+            }
+
+            ChessGame game = currentGame.game();
+            String currentUser = SERVER_FACADE.getCurrentUsername();
+
+            String perspective = "WHITE";
+            if (currentUser != null) {
+                if (currentUser.equals(currentGame.blackUsername())) {
+                    perspective = "BLACK";
+                } else if (currentUser.equals(currentGame.whiteUsername())) {
+                    perspective = "WHITE";
+                }
+            }
+
+            System.out.println("\n[Board Redrawn]");
+            ChessClientUtils.drawBoard(game, perspective);
+
+        } catch (Exception e) {
+            System.out.println("Failed to redraw board.");
+            e.printStackTrace();
+        }
     }
 
 }

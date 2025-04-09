@@ -110,7 +110,9 @@ public class WebSocketHandler {
                 return;
             }
 
-            ChessGame game = communicator.getGameDAO().getGame(gameID).game();
+            GameData existingGameData = communicator.getGameDAO().getGame(gameID);
+            ChessGame game = existingGameData.game();
+
             if (game.isGameOver()) {
                 sendError(session, "Error: game already over");
                 return;
@@ -127,23 +129,59 @@ public class WebSocketHandler {
                 return;
             }
 
+            // 본인에게 LOAD_GAME
             communicator.sendMessage(authToken, new LoadGameMessage(updatedGame));
 
+            // 모두에게 Notification + LoadGame
             String username = communicator.getUsername(authToken);
             String msg = username + " made a move from " +
                     command.getMove().getStartPosition() + " to " +
                     command.getMove().getEndPosition();
 
-            System.out.println("Sending Notification: "+msg);
-
+            System.out.println("Sending Notification: " + msg);
             communicator.broadcastToGame(gameID, new NotificationMessage(msg), authToken);
             communicator.broadcastToGame(gameID, new LoadGameMessage(updatedGame), authToken);
+
+            // Checkmate / Check 처리
+            ChessGame.TeamColor opponent = updatedGame.getTeamTurn(); // 지금 차례인 팀 = 이전 move로 인해 check당한 쪽
+            String opponentName = (opponent == ChessGame.TeamColor.WHITE)
+                    ? existingGameData.whiteUsername()
+                    : existingGameData.blackUsername();
+
+            if (updatedGame.isInCheckmate(opponent)) {
+                // 게임 종료
+                updatedGame.setGameOver(true);
+
+                // DB 업데이트
+                GameData updatedGameData = new GameData(
+                        existingGameData.gameID(),
+                        existingGameData.whiteUsername(),
+                        existingGameData.blackUsername(),
+                        existingGameData.gameName(),
+                        updatedGame
+                );
+                communicator.getGameDAO().updateGame(updatedGameData);
+
+                // 승자 이름
+                String winnerName = (opponent == ChessGame.TeamColor.WHITE)
+                        ? existingGameData.blackUsername()
+                        : existingGameData.whiteUsername();
+
+                // 알림 전송
+                communicator.broadcastToGame(gameID, new NotificationMessage("Checkmate!"), null);
+                communicator.broadcastToGame(gameID, new NotificationMessage(winnerName + " wins."), null);
+
+            } else if (updatedGame.isInCheck(opponent)) {
+                communicator.broadcastToGame(gameID, new NotificationMessage(opponentName + " is in check."), null);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
             sendError(session, "Error: Invalid move command");
         }
     }
+
+
 
 
 
