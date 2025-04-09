@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketCommunicator {
 
     // 전체 연결 (optional: 디버깅 or fallback용)
-    private static final Map<String, Session> connections = new ConcurrentHashMap<>(); // authToken → Session
+    private static final Map<String, Session> CONNECTIONS = new ConcurrentHashMap<>(); // authToken → Session
 
     // 게임별 연결 관리: gameID → (authToken → Session)
-    private static final Map<Integer, Map<String, Session>> gameConnections = new ConcurrentHashMap<>();
+    private static final Map<Integer, Map<String, Session>> GAME_CONNECTIONS = new ConcurrentHashMap<>();
 
     // authToken → username 매핑
-    private static final Map<String, String> tokenToUsername = new ConcurrentHashMap<>();
+    private static final Map<String, String> TOKEN_TO_USERNAME = new ConcurrentHashMap<>();
 
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
     private final GameDAO gameDAO;
@@ -35,13 +35,13 @@ public class WebSocketCommunicator {
     }
 
     public void addConnection(String authToken, int gameID, Session session) {
-        connections.put(authToken, session);
-        gameConnections.computeIfAbsent(gameID, k -> new ConcurrentHashMap<>()).put(authToken, session);
+        CONNECTIONS.put(authToken, session);
+        GAME_CONNECTIONS.computeIfAbsent(gameID, k -> new ConcurrentHashMap<>()).put(authToken, session);
 
         try {
             AuthData auth = authDAO.getAuth(authToken);
             if (auth != null) {
-                tokenToUsername.put(authToken, auth.username());
+                TOKEN_TO_USERNAME.put(authToken, auth.username());
             }
         } catch (DataAccessException e) {
             e.printStackTrace();
@@ -49,17 +49,17 @@ public class WebSocketCommunicator {
     }
 
     public void removeConnection(String authToken) {
-        connections.remove(authToken);
-        tokenToUsername.remove(authToken);
+        CONNECTIONS.remove(authToken);
+        TOKEN_TO_USERNAME.remove(authToken);
 
         // 게임 세션에서도 제거
-        for (Map<String, Session> gameMap : gameConnections.values()) {
+        for (Map<String, Session> gameMap : GAME_CONNECTIONS.values()) {
             gameMap.remove(authToken);
         }
     }
 
     public void sendMessage(String authToken, ServerMessage message) {
-        Session session = connections.get(authToken);
+        Session session = CONNECTIONS.get(authToken);
         if (session != null && session.isOpen()) {
             sendMessage(session, message);
         }
@@ -81,7 +81,7 @@ public class WebSocketCommunicator {
     }
 
     public void broadcastToGame(int gameID, ServerMessage message, String exceptAuthToken) {
-        Map<String, Session> gameSessions = gameConnections.get(gameID);
+        Map<String, Session> gameSessions = GAME_CONNECTIONS.get(gameID);
         if (gameSessions == null) {
             return;
         }
@@ -101,13 +101,15 @@ public class WebSocketCommunicator {
     }
 
     public String getUsername(String authToken) throws DataAccessException {
-        String username = tokenToUsername.get(authToken);
-        if (username == null) throw new DataAccessException("Error: invalid authToken");
+        String username = TOKEN_TO_USERNAME.get(authToken);
+        if (username == null) {
+            throw new DataAccessException("Error: invalid authToken");
+        }
         return username;
     }
 
     public String getAuthToken(String username) {
-        for (Map.Entry<String, Session> entry : connections.entrySet()) {
+        for (Map.Entry<String, Session> entry : CONNECTIONS.entrySet()) {
             String token = entry.getKey();
             Session session = entry.getValue();
 

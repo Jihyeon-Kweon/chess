@@ -30,7 +30,7 @@ public class WebSocketHandler {
         communicator = comm;
     }
 
-    private static final Map<String, Session> userSessions = new ConcurrentHashMap<>();
+    private static final Map<String, Session> USER_SESSIONS = new ConcurrentHashMap<>();
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
     @OnWebSocketConnect
