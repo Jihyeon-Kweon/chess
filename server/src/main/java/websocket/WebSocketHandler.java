@@ -66,10 +66,10 @@ public class WebSocketHandler {
 
     private void handleConnect(String authToken, Integer gameID, Session session) {
         try {
-            System.out.println("🔐 handleConnect - authToken: " + authToken + ", gameID: " + gameID);
+            System.out.println("handleConnect - authToken: " + authToken + ", gameID: " + gameID);
 
             AuthData authData = communicator.getAuthDAO().getAuth(authToken);
-            System.out.println("🔍 Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
+            System.out.println("Token lookup result: " + (authData == null ? "NOT FOUND" : authData.username()));
 
             ChessGame game = gameService.getGame(gameID, authToken);
             communicator.addConnection(authToken, gameID, session);
@@ -193,7 +193,7 @@ public class WebSocketHandler {
                 return;
             }
 
-            // 🔥 게임 종료 처리 후 DB 업데이트
+            // 게임 종료 처리 후 DB 업데이트
             gameData.game().setGameOver(true);
             communicator.getGameDAO().updateGame(gameData);
 

@@ -67,15 +67,15 @@ public class WebSocketCommunicator {
 
     public void sendMessage(Session session, ServerMessage message) {
         try {
-            System.out.println("🔔 Sending message to session: " + session);
-            System.out.println("📡 Session is open: " + session.isOpen());
-            System.out.println("📨 Message: " + gson.toJson(message));
+            System.out.println("Sending message to session: " + session);
+            System.out.println("Session is open: " + session.isOpen());
+            System.out.println("Message: " + gson.toJson(message));
 
             session.getRemote().sendString(gson.toJson(message));
 
-            System.out.println("✅ Message successfully sent.");
+            System.out.println("Message successfully sent.");
         } catch (IOException e) {
-            System.out.println("❌ Failed to send message:");
+            System.out.println("Failed to send message:");
             e.printStackTrace();
         }
     }
