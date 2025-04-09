@@ -47,7 +47,7 @@ public class ChessClient {
     private static void connectWebSocket() {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            URI uri = new URI("ws://localhost:8080/connect");
+            URI uri = new URI("ws://localhost:8080/ws");
             container.connectToServer(ChessClient.class, uri);
         } catch (Exception e) {
             System.err.println("Failed to connect to WebSocket server.");
