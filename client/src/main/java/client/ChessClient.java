@@ -318,9 +318,17 @@ public class ChessClient {
     }
 
     private static void resignGame() {
-        sendCommand(new UserGameCommand(CommandType.RESIGN, currentAuthToken, currentGameID));
-        System.out.println("Resigned from the game.");
+        System.out.print("Are you sure you want to resign? (Y/N): ");
+        String input = SCANNER.nextLine().trim().toLowerCase();
+
+        if (input.equals("y") || input.equals("yes")) {
+            sendCommand(new UserGameCommand(CommandType.RESIGN, currentAuthToken, currentGameID));
+            System.out.println("You have resigned from the game.");
+        } else {
+            System.out.println("Resignation canceled.");
+        }
     }
+
 
     private static void sendCommand(Object command) {
         try {
